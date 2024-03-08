@@ -1,0 +1,64 @@
+{
+  "creative_tab.dim_bag": "Dimensional Bag",
+
+  "key.categories.dim_bag": "Dimensional Bag",
+  "key.bag_action": "Bag Action Key",
+
+  "notification.bag.changed_mode": "Switched mode to: %s",
+  "notification.upgrade.trying_to_install_disabled_upgrade": "This upgrade is disabled, unable to install",
+  "notification.upgrade.installed_X_upgrades": "Installed %d %s",
+  "notification.upgrade.max_upgrades_reached": "Max upgrade count reached for %s",
+
+  "bag.mode.Default": "Default",
+  "bag.mode.Debug": "Debug",
+  "bag.mode.Settings": "Settings / Wrench",
+  "bag.mode.Capture": "Capture",
+  "bag.mode.Manual": "Manual",
+  "bag.mode.Tank": "Tank",
+
+  "item.dim_bag.bag_item": "Dimensional Bag",
+  "item.dim_bag.virtual_bag_item": "Virtual Bag",
+  "item.dim_bag.module_frame_item": "Module Frame",
+  "item.dim_bag.wall_pusher_item": "Wall Pusher",
+
+  "block.dim_bag.wall_block": "Wall",
+  "block.dim_bag.teleport_module": "Access Pad",
+  "block.dim_bag.slot_module": "Slot",
+  "block.dim_bag.tank_module": "Tank",
+  "block.dim_bag.observer_module": "Observer Module",
+  "block.dim_bag.paradox_module": "Paradox Module",
+  "block.dim_bag.tomb_module": "Tomb Module",
+  "block.dim_bag.battery_module": "Battery Module",
+
+  "teleporter.data.label.default": "Access Module",
+
+  "screen.bag.button.quick_equip": "Quick equip bag on leaving",
+  "screen.bag.button.normal_equip": "Do nothing",
+  "screen.bag.button.quick_enter": "Enter bag when unequipped",
+  "screen.bag.button.normal_unequip": "Do nothing",
+
+  "screen.teleporter.button.whitelist": "Whitelist",
+  "screen.teleporter.button.blacklist": "Blacklist",
+  "screen.teleporter.button.players": "Affect Players",
+  "screen.teleporter.button.no_players": "Do Not Affect Players",
+
+  "screen.observer.title": "Observer Module",
+  "screen.observer.button.kind": "Kind: %s",
+  "screen.observer.button.kind.obs": "Observation",
+  "screen.observer.button.kind.op": "Operation",
+  "screen.observer.button.kind.lit": "Literal",
+  "screen.observer.button.kind.rs": "Redstone",
+  "screen.observer.button.line": "Line",
+  "screen.observer.button.value": "Value",
+
+  "screen.fluid.bucket_acronym": "B",
+  "screen.fluid.milli_bucket_acronym": "mB",
+
+  "item.fluid_item.empty_name": "Empty",
+  "item.fluid_item.append_qty_to_name": " (%dmb)",
+
+  "modules.capture.selected_entity": "Selected access pad: %s -> entity: %s",
+  "modules.capture.no_entity": "None",
+
+  "container.sculk_module": "Sculk Module"
+}

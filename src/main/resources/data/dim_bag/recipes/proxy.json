@@ -1,0 +1,29 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "pattern": [
+    "IEI",
+    "GMG",
+    "IOI"
+  ],
+  "key": {
+    "I": {
+      "tag": "forge:ingots/iron"
+    },
+    "E": {
+      "tag": "forge:ender_pearls"
+    },
+    "G": {
+      "tag": "forge:glass_panes"
+    },
+    "O": {
+      "item": "minecraft:crying_obsidian"
+    },
+    "M": {
+      "item": "dim_bag:module_frame_item"
+    }
+  },
+  "result": {
+    "item": "dim_bag:proxy_block",
+    "count": 1
+  }
+}

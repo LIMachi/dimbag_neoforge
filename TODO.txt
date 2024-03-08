@@ -1,0 +1,9 @@
+Texture the wall pusher, parasite module, proxy block, observer module, tomb module, sculk module, paradox module, armor stand module, sleepy module
+Generate traductions for the parasite module, proxy block, sculk module, armor stand module, sleepy module
+Think about module upgrades/settings (slot, tank and battery could have push/pull systems, slot could be colored to better find them)
+Better position the bag model on the player, better position the bag on non player entities (to prevent the AI move glitch on floating entities and improve the readibility on standing entities)
+Improve the screen for the sculk module, parasite module
+Disable the keyboard virtualization of the parasite module and work using impulsions instead?
+Add energy costs on some operations
+Redo actuator (many functions do not work as intended)
+Fix auto selection of upgrade position when installed via bag

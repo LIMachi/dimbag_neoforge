@@ -1,0 +1,18 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "ingredients": [
+    {
+      "item": "dim_bag:module_frame_item"
+    },
+    {
+      "item": "minecraft:armor_stand"
+    },
+    {
+      "tag": "forge:ender_pearls"
+    }
+  ],
+  "result": {
+    "item": "dim_bag:armor_stand_module",
+    "count": 1
+  }
+}

@@ -1,0 +1,18 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "ingredients": [
+    {
+      "item": "dim_bag:module_frame_item"
+    },
+    {
+      "item": "minecraft:white_bed"
+    },
+    {
+      "item": "minecraft:respawn_anchor"
+    }
+  ],
+  "result": {
+    "item": "dim_bag:sleepy_module",
+    "count": 1
+  }
+}

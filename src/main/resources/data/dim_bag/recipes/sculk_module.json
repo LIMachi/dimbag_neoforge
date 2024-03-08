@@ -1,0 +1,29 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "pattern": [
+    "VBV",
+    "SFS",
+    "VCV"
+  ],
+  "key": {
+    "F": {
+      "item": "dim_bag:module_frame_item"
+    },
+    "B": {
+      "item": "minecraft:sculk_shrieker"
+    },
+    "S": {
+      "item": "minecraft:sculk_sensor"
+    },
+    "V": {
+      "item": "minecraft:sculk_vein"
+    },
+    "C": {
+      "item": "minecraft:sculk_catalyst"
+    }
+  },
+  "result": {
+    "item": "dim_bag:sculk_module",
+    "count": 1
+  }
+}

@@ -1,0 +1,17 @@
+{
+  "multipart": [
+    { "apply": { "model": "dim_bag:block/frame" } },
+    { "when": { "up": "push" }, "apply": { "model": "dim_bag:block/battery/top_push" } },
+    { "when": { "up": "pull" }, "apply": { "model": "dim_bag:block/battery/top_pull" } },
+    { "when": { "down": "push" }, "apply": { "model": "dim_bag:block/battery/top_push", "x": 180 } },
+    { "when": { "down": "pull" }, "apply": { "model": "dim_bag:block/battery/top_pull", "x": 180 } },
+    { "when": { "north": "push" }, "apply": { "model": "dim_bag:block/battery/top_push", "x": 90 } },
+    { "when": { "north": "pull" }, "apply": { "model": "dim_bag:block/battery/top_pull", "x": 90 } },
+    { "when": { "east": "push" }, "apply": { "model": "dim_bag:block/battery/top_push", "x": 90, "y": 90 } },
+    { "when": { "east": "pull" }, "apply": { "model": "dim_bag:block/battery/top_pull", "x": 90, "y": 90 } },
+    { "when": { "south": "push" }, "apply": { "model": "dim_bag:block/battery/top_push", "x": 90, "y": 180 } },
+    { "when": { "south": "pull" }, "apply": { "model": "dim_bag:block/battery/top_pull", "x": 90, "y": 180 } },
+    { "when": { "west": "push" }, "apply": { "model": "dim_bag:block/battery/top_push", "x": 90, "y": 270 } },
+    { "when": { "west": "pull" }, "apply": { "model": "dim_bag:block/battery/top_pull", "x": 90, "y": 270 } }
+  ]
+}
