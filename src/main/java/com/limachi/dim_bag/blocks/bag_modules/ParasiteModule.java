@@ -38,7 +38,7 @@ public class ParasiteModule extends BaseModule implements EntityBlock {
     }
 
     @Override
-    protected void init() {
+    public void init() {
         registerDefaultState(stateDefinition.any().setValue(BlockStateProperties.POWERED, false));
     }
 

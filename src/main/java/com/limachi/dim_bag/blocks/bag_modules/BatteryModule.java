@@ -67,7 +67,7 @@ public class BatteryModule extends BaseModule implements EntityBlock {
     }
 
     @Override
-    protected void init() {
+    public void init() {
         registerDefaultState(stateDefinition.any()
             .setValue(UP, PushPull.NONE).setValue(DOWN, PushPull.NONE)
             .setValue(NORTH, PushPull.NONE).setValue(SOUTH, PushPull.NONE)

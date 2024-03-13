@@ -31,12 +31,14 @@ import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.gameevent.DynamicGameEventListener;
 import net.minecraft.world.phys.AABB;
 import net.minecraftforge.common.capabilities.CapabilityManager;
 import net.minecraftforge.common.util.LazyOptional;
 import net.minecraftforge.items.IItemHandler;
 
 import java.util.Optional;
+import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 
 public class BagInstance {
@@ -177,48 +179,18 @@ public class BagInstance {
         energy.store();
     }
 
-    public void setHolder(Entity entity) {
-        if (entity.level().dimension().equals(DimBag.BAG_DIM) && BagsData.runOnBag(entity.level(), entity.blockPosition(), b->b.bag, 0) == 0) {
-            if (entity instanceof BagItemEntity || entity instanceof BagEntity)
-                leave(entity);
-            holder.paradox = true;
-            return;
-        }
-        boolean paradox = (entity.level().dimension().equals(DimBag.BAG_DIM) && isInRoom(entity.blockPosition()));
-        if (paradox) {
-            if (entity instanceof BagItemEntity || entity instanceof BagEntity) { //bags as item/entities should never be allowed to live inside a bag if not inside an inventory (as this would probably result in loss of bag access)
-                if (entity.equals(holder.entity))
-                    leave(entity);
-                holder.paradox = true; //if the ticking entity is a bag but the holder is not a bag, instead we can monitor entities that are leaving the bag, and if the holder is leaving the bag, scan the room to teleport the bags with the holder to fix paradox stranding (could also scan the bag room every X tick for players, and if none are found try to extract bags)
-                return;
-            }
-            holder.paradox = true;
-            if (!isModulePresent(ParadoxModule.PARADOX_KEY)) {
-                if (holder.level != null && holder.position != null)
-                    BagItem.unequipBags(entity, bagId(), holder.level, holder.position, false);
-                else
-                    ; //FIXME: player spawn if entity is player? world spawn?
-                return;
-            }
-        } else {
-            holder.paradox = false;
-            holder.position = entity.blockPosition();
-            holder.level = entity.level();
-        }
-        holder.entity = entity;
+    public void tick(Entity entity) {
+        holder.tick(this, entity);
     }
 
-    public Optional<Entity> getHolder(boolean nonParadoxOnly) {
-        if (nonParadoxOnly && holder.paradox) return Optional.empty();
-        return Optional.ofNullable(holder.entity);
-    }
+    public Optional<Entity> getHolder(boolean nonParadoxOnly) { return holder.getHolder(nonParadoxOnly); }
 
     public Optional<Pair<Level, BlockPos>> getHolderPosition(boolean nonParadoxOnly) {
-        if (holder.paradox && !nonParadoxOnly && holder.entity != null)
-                return Optional.of(new Pair<>(World.getLevel(DimBag.BAG_DIM), holder.entity.blockPosition()));
-        if (holder.position != null && holder.level != null)
-            return Optional.of(new Pair<>(holder.level, holder.position));
-        return Optional.empty();
+        return holder.getHolderPosition(nonParadoxOnly);
+    }
+
+    public void updateEventTracker(BiConsumer<DynamicGameEventListener<?>, ServerLevel> consumer) {
+        holder.updateEventTracker(consumer);
     }
 
     /**

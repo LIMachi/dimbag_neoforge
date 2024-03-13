@@ -47,7 +47,7 @@ import java.util.List;
 
 public class BagEntity extends Mob implements Container, ISpecialEntityRider {
 
-    @RegisterEntity(width = 0.4f, height = 0.8f)
+    @RegisterEntity(width = 0.75f, height = 0.95f)
     public static RegistryObject<EntityType<BagEntity>> R_TYPE;
 
     @EntityAttributeBuilder
@@ -108,14 +108,16 @@ public class BagEntity extends Mob implements Container, ISpecialEntityRider {
     public boolean ignoreExplosion() { return true; }
 
     @Override
-    protected void pickUpItem(ItemEntity itemEntity) {}
+    protected void pickUpItem(@Nonnull ItemEntity itemEntity) {}
 
     public static List<ItemStack> getEmptyEquipment() { return EMPTY_EQUIPMENT; }
 
     @Override
+    @Nonnull
     public Iterable<ItemStack> getHandSlots() { return EMPTY_EQUIPMENT; }
 
     @Override
+    @Nonnull
     public Iterable<ItemStack> getArmorSlots() { return EMPTY_EQUIPMENT; }
 
     @Nonnull
@@ -134,21 +136,14 @@ public class BagEntity extends Mob implements Container, ISpecialEntityRider {
     @Override
     public boolean isAlwaysTicking() { return true; }
 
-    protected int loadCoolDown = 0;
-    protected BlockPos lastPos = blockPosition();
-
     @Override
     public void tick() {
-        if (!level().isClientSide && (--loadCoolDown <= 0 || !lastPos.equals(blockPosition()))) {
-            World.temporaryChunkLoad(level(), blockPosition());
-            loadCoolDown = 200;
-            lastPos = blockPosition();
+        if (!level().isClientSide) {
             BagsData.runOnBag(getBagId(), b->{
-                if (getVehicle() != null)
-                    b.setHolder(getVehicle());
-                else
-                    b.setHolder(this);
-                b.temporaryChunkLoad();
+                Entity entity = this.getVehicle();
+                if (entity == null)
+                    entity = this;
+                b.tick(entity);
             });
         }
         if (getYRot() != getYHeadRot())
@@ -194,10 +189,11 @@ public class BagEntity extends Mob implements Container, ISpecialEntityRider {
     public boolean canPickUpLoot() { return false; }
 
     @Override
-    public boolean canHoldItem(ItemStack p_175448_1_) { return false; }
+    public boolean canHoldItem(@Nonnull ItemStack stack) { return false; }
 
     @Override
-    public InteractionResult mobInteract(Player player, InteractionHand hand) {
+    @Nonnull
+    public InteractionResult mobInteract(Player player, @Nonnull InteractionHand hand) {
         if (player.level().isClientSide) return InteractionResult.SUCCESS;
         if (player.getItemInHand(hand).getItem() instanceof BlockItem bi && bi.getBlock() instanceof BaseModule module) {
             int id = getBagId();
@@ -265,12 +261,8 @@ public class BagEntity extends Mob implements Container, ISpecialEntityRider {
     }
 
     @Override
-    public void clearContent() {
-        BagsData.runOnBag(this, b->b.slotsHandle().ifPresent(SlotData::clearContent));
-    }
+    public void clearContent() { BagsData.runOnBag(this, b->b.slotsHandle().ifPresent(SlotData::clearContent)); }
 
     @Override
-    public boolean canControl(Entity entity) {
-        return BagsData.runOnBag(this, b->b.isModeEnabled(ParasiteMode.NAME));
-    }
+    public boolean canControl(Entity entity) { return BagsData.runOnBag(this, b->b.isModeEnabled(ParasiteMode.NAME)); }
 }

@@ -1,27 +1,19 @@
 {
-  "type": "minecraft:crafting_shaped",
-  "pattern": [
-    "VBV",
-    "SFS",
-    "VCV"
-  ],
-  "key": {
-    "F": {
+  "type": "minecraft:crafting_shapeless",
+  "ingredients": [
+    {
       "item": "dim_bag:module_frame_item"
     },
-    "B": {
-      "item": "minecraft:sculk_shrieker"
-    },
-    "S": {
-      "item": "minecraft:sculk_sensor"
-    },
-    "V": {
-      "item": "minecraft:sculk_vein"
-    },
-    "C": {
+    {
       "item": "minecraft:sculk_catalyst"
+    },
+    {
+      "item": "minecraft:piston"
+    },
+    {
+      "item": "minecraft:sticky_piston"
     }
-  },
+  ],
   "result": {
     "item": "dim_bag:sculk_module",
     "count": 1

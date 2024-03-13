@@ -43,7 +43,7 @@ public class ObserverModule extends BaseModule implements EntityBlock {
     }
 
     @Override
-    protected void init() { registerDefaultState(stateDefinition.any().setValue(BlockStateProperties.POWER, 0)); }
+    public void init() { registerDefaultState(stateDefinition.any().setValue(BlockStateProperties.POWER, 0)); }
 
     @Nullable
     @Override

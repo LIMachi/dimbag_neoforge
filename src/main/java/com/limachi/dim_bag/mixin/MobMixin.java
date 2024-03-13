@@ -21,7 +21,7 @@ public abstract class MobMixin {
     @Unique
     private final Mob mixin$this = (Mob)(Object)this;
 
-    @Inject(method = "updateControlFlags()V", at = @At(value = "TAIL"))
+    @Inject(method = "updateControlFlags", at = @At(value = "TAIL"))
     protected void bagsControlEntitiesOnlyWhenParasiteIsActive(CallbackInfo ci) {
         if (getControllingPassenger() instanceof BagEntity bag && !bag.isParasiting()) {
             mixin$this.goalSelector.setControlFlag(Goal.Flag.MOVE, true);

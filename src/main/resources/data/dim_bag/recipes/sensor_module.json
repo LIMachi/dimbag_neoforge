@@ -1,0 +1,18 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "ingredients": [
+    {
+      "item": "dim_bag:module_frame_item"
+    },
+    {
+      "item": "minecraft:calibrated_sculk_sensor"
+    },
+    {
+      "item": "minecraft:comparator"
+    }
+  ],
+  "result": {
+    "item": "dim_bag:sensor_module",
+    "count": 1
+  }
+}

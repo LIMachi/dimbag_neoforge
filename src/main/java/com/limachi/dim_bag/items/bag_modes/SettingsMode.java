@@ -3,6 +3,7 @@ package com.limachi.dim_bag.items.bag_modes;
 import com.limachi.dim_bag.DimBag;
 import com.limachi.dim_bag.blocks.WallBlock;
 import com.limachi.dim_bag.blocks.bag_modules.BaseModule;
+import com.limachi.dim_bag.blocks.bag_modules.IBagModule;
 import com.limachi.dim_bag.items.BagItem;
 import com.limachi.dim_bag.menus.BagMenu;
 import com.limachi.dim_bag.save_datas.BagsData;
@@ -94,8 +95,8 @@ public class SettingsMode extends BaseMode {
                 return true;
             if (KeyMapController.SNEAK.getState(player))
                 BagsData.runOnBag(player.level(), pos, bag->{
-                    if (bs.getBlock() instanceof BaseModule module) {
-                        ItemStack out = module.getCloneItemStack(player.level(), pos, bs);
+                    if (bs.getBlock() instanceof IBagModule module) {
+                        ItemStack out = bs.getBlock().getCloneItemStack(player.level(), pos, bs);
                         module.uninstall(bag, player, player.level(), pos, out);
                         player.level().setBlockAndUpdate(pos, bag.isWall(pos) ? WallBlock.R_BLOCK.get().defaultBlockState() : Blocks.AIR.defaultBlockState());
                         PlayerUtils.giveOrDrop(player, out);

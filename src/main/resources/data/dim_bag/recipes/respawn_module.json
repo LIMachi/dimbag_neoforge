@@ -5,14 +5,14 @@
       "item": "dim_bag:module_frame_item"
     },
     {
-      "item": "minecraft:white_bed"
+      "item": "minecraft:nether_star"
     },
     {
       "item": "minecraft:respawn_anchor"
     }
   ],
   "result": {
-    "item": "dim_bag:sleepy_module",
+    "item": "dim_bag:respawn_module",
     "count": 1
   }
 }

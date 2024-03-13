@@ -104,20 +104,10 @@ public class BagItemEntity extends ItemEntity {
 
     public int getBagId() { return BagItem.getBagId(getItem()); }
 
-    protected int loadCoolDown = 0;
-    protected BlockPos lastPos = blockPosition();
-
     @Override
     public void tick() {
-        if (!level().isClientSide && (--loadCoolDown <= 0 || !lastPos.equals(blockPosition()))) {
-            World.temporaryChunkLoad(level(), blockPosition());
-            loadCoolDown = 200;
-            lastPos = blockPosition();
-            BagsData.runOnBag(getBagId(), b->{
-                b.setHolder(this);
-                b.temporaryChunkLoad();
-            });
-        }
+        if (!level().isClientSide)
+            BagsData.runOnBag(getBagId(), b->b.tick(this));
         super.tick();
     }
 }

@@ -47,15 +47,15 @@ public class BagLayer<T extends LivingEntity, M extends EntityModel<T>> extends 
     @Override
     public void render(PoseStack pose, MultiBufferSource buffer, int packedLight, T entity, float limbSwing, float limbSwingAmount, float partialTicks, float ageInTicks, float netHeadYaw, float headPitch) {
         if (!entity.isInvisible() && DimBag.getBagAccess(entity, 0, true, false, false, false) > 0) {
-            pose.pushPose();
+//            pose.pushPose();
             getParentModel().copyPropertiesTo(model);
             if (getParentModel() instanceof HumanoidModel<?> humanoid)
                 model.copyPropertiesFromHumanoid(humanoid);
             model.setupAnim(entity, limbSwing, limbSwingAmount, ageInTicks, netHeadYaw, headPitch);
-            pose.translate(0f, 0.5f, 0.1f);
+//            pose.translate(0f, 0.5f, 0.1f);
             VertexConsumer vertexconsumer = ItemRenderer.getArmorFoilBuffer(buffer, RenderType.armorCutoutNoCull(BagEntityRenderer.TEXTURE), false, false);
             model.renderToBuffer(pose, vertexconsumer, packedLight, OverlayTexture.NO_OVERLAY, 1f, 1f, 1f, 1f);
-            pose.popPose();
+//            pose.popPose();
         }
     }
 }

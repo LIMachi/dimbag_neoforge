@@ -355,9 +355,8 @@ public class BagItem extends Item implements IScrollItem {
             if (id < 1)
                 data.putInt(BAG_ID_KEY, id = BagsData.newBagId());
             BagsData.runOnBag(id, b->{
-                b.setHolder(entity);
-                b.temporaryChunkLoad();
                 commonBagTick(b, data, stack, level, entity, slot, selected);
+                b.tick(entity);
             });
         }
     }

@@ -5,6 +5,7 @@ import com.limachi.dim_bag.save_datas.BagsData;
 import com.limachi.lim_lib.Configs;
 import com.limachi.lim_lib.World;
 import net.minecraft.core.BlockPos;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.player.Player;
@@ -15,6 +16,7 @@ import net.minecraftforge.event.entity.EntityMobGriefingEvent;
 import net.minecraftforge.event.entity.living.LivingDestroyBlockEvent;
 import net.minecraftforge.event.entity.living.LivingEvent;
 import net.minecraftforge.event.entity.player.PlayerEvent;
+import net.minecraftforge.event.entity.player.PlayerInteractEvent;
 import net.minecraftforge.event.level.BlockEvent;
 import net.minecraftforge.event.level.ExplosionEvent;
 import net.minecraftforge.event.level.SleepFinishedTimeEvent;
@@ -30,6 +32,22 @@ import java.util.Arrays;
 public class RoomEvents {
     @Configs.Config(cmt = "list of mobs (ressource style, regex compatible), that should not be able to grief (warning, the defaults are there because some vanilla mobs might be able to break walls)")
     public static String[] BLACK_LIST_MOB_GRIEF = {"minecraft:enderman", "minecraft:silverfish"};
+
+    @Configs.Config(cmt = "list of blocks that should not be allowed to be placed in the bag (note: will still be allowed if placed while in creative)")
+    public static String[] BLACK_LIST_IN_BAG = {"minecraft:.+_bed", "minecraft:respawn_anchor"};
+
+    @SubscribeEvent
+    public static void placingInvalidBlock(PlayerInteractEvent.RightClickBlock event) {
+        Level level = event.getLevel();
+        if (!event.getEntity().isCreative() && level.dimension().equals(DimBag.BAG_DIM)) {
+            ResourceLocation item = ForgeRegistries.ITEMS.getKey(event.getItemStack().getItem());
+            if (item != null) {
+                String test = item.toString();
+                if (Arrays.stream(BLACK_LIST_IN_BAG).anyMatch(test::matches))
+                    event.setCanceled(true);
+            }
+        }
+    }
 
     @SubscribeEvent
     public static void mobGrief(EntityMobGriefingEvent event) {

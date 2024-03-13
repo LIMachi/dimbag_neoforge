@@ -4,7 +4,6 @@ import com.limachi.dim_bag.DimBag;
 import com.limachi.dim_bag.capabilities.entities.BagMode;
 import com.limachi.dim_bag.items.bag_modes.SettingsMode;
 import com.limachi.dim_bag.save_datas.BagsData;
-import com.limachi.dim_bag.save_datas.bag_data.BagInstance;
 import com.limachi.lim_lib.capabilities.Cap;
 import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;
@@ -33,12 +32,13 @@ import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 
 @Mod.EventBusSubscriber(modid = DimBag.MOD_ID, value = Dist.CLIENT)
-public abstract class BaseModule extends Block {
+public abstract class BaseModule extends Block implements IBagModule {
 
     public final String name;
+    public static final Properties DEFAULT_PROPERTIES = Properties.copy(Blocks.BEDROCK).isValidSpawn((s, b, p, e)->false).isSuffocating((s, b, p)->false).noOcclusion().noLootTable().isViewBlocking((s, l, p)->false);
 
     public BaseModule(String name) {
-        super(Properties.copy(Blocks.BEDROCK).isValidSpawn((s, b, p, e)->false).isSuffocating((s, b, p)->false).noOcclusion().noLootTable().isViewBlocking((s, l, p)->false));
+        super(DEFAULT_PROPERTIES);
         this.name = name;
         init();
     }
@@ -47,8 +47,6 @@ public abstract class BaseModule extends Block {
     public int getLightEmission(BlockState state, BlockGetter level, BlockPos pos) {
         return pos.distManhattan(DimBag.INVALID_POS) < 1000 ? 15 : super.getLightEmission(state, level, pos);
     }
-
-    public boolean canInstall(BagInstance bag) { return true; }
 
     @SubscribeEvent
     public static void addLabelTooltip(ItemTooltipEvent event) {
@@ -63,36 +61,15 @@ public abstract class BaseModule extends Block {
         }
     }
 
-    protected void init() {}
-
     @Override
-    final public InteractionResult use(BlockState state, Level level, BlockPos pos, Player player, InteractionHand hand, BlockHitResult hit) {
+    @Nonnull
+    final public InteractionResult use(@Nonnull BlockState state, Level level, @Nonnull BlockPos pos, @Nonnull Player player, @Nonnull InteractionHand hand, @Nonnull BlockHitResult hit) {
         if (level.isClientSide) return InteractionResult.SUCCESS;
         if (BagsData.runOnBag(player.getItemInHand(hand), b-> SettingsMode.NAME.equals(Cap.run(player, BagMode.TOKEN, c->c.getMode(b.bagId()), "")) && wrench(b, player, level, pos, player.getItemInHand(hand), hit), false))
             return InteractionResult.SUCCESS;
         if (BagsData.runOnBag(level, pos, b->use(b, player, level, pos, hand), false))
             return InteractionResult.SUCCESS;
         return super.use(state, level, pos, player, hand, hit);
-    }
-
-    /**
-     * called when a module is breaking (removed from bag), use this to add removal logic
-     */
-    public void uninstall(BagInstance bag, Player player, Level level, BlockPos pos, ItemStack stack) {}
-
-    /**
-     * called when a module was installed (place inside the bag), use this to add placement logic
-     */
-    public void install(BagInstance bag, Player player, Level level, BlockPos pos, ItemStack stack) {}
-
-    /**
-     * called when a module is right-clicked by a bag in settings/wrench mode
-     * return true to cancel the right click (consume)
-     */
-    public boolean wrench(BagInstance bag, Player player, Level level, BlockPos pos, ItemStack stack, BlockHitResult hit) { return false; }
-
-    public boolean use(BagInstance bag, Player player, Level level, BlockPos pos, InteractionHand hand) {
-        return false;
     }
 
     /**
