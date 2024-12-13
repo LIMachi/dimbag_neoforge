@@ -7,9 +7,11 @@ import com.limachi.dim_bag.save_datas.BagsData;
 import com.limachi.dim_bag.save_datas.bag_data.BagInstance;
 import com.limachi.lim_lib.registries.annotations.RegisterBlock;
 import com.limachi.lim_lib.registries.annotations.RegisterItem;
+import com.limachi.lim_lib.utils.FluidItem;
 import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.Tag;
+import net.minecraft.network.chat.Component;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.BlockItem;
@@ -20,6 +22,7 @@ import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.entity.BlockEntityTicker;
 import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.state.BlockState;
+import net.minecraftforge.fluids.FluidStack;
 import net.minecraftforge.registries.RegistryObject;
 
 import javax.annotation.Nonnull;
@@ -40,6 +43,18 @@ public class SlotModule extends BaseModule implements EntityBlock {
         public static RegistryObject<BlockItem> R_ITEM;
 
         public SlotModuleItem() { super(R_BLOCK.get(), new Properties()); }
+
+        @Override
+        @Nonnull
+        public Component getName(@Nonnull ItemStack stack) {
+            CompoundTag tag = stack.getTag();
+            if (tag != null) {
+                ItemStack content = ItemStack.of(tag);
+                if (!content.isEmpty())
+                    return Component.translatable("block.dim_bag.slot_module_with_item", content.getCount(), content.getItem().getName(content));
+            }
+            return super.getName(stack);
+        }
     }
 
     @Override

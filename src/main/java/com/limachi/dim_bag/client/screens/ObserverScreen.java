@@ -1,11 +1,11 @@
 package com.limachi.dim_bag.client.screens;
 
-import com.limachi.dim_bag.client.widgets.*;
 import com.limachi.dim_bag.entities.utils.TagOperation;
 import com.limachi.dim_bag.menus.ObserverMenu;
 import com.limachi.lim_lib.network.messages.ScreenNBTMsg;
 import com.limachi.lim_lib.registries.clientAnnotations.RegisterMenuScreen;
 import com.limachi.lim_lib.render.GuiUtils;
+import com.limachi.lim_lib.widgets.*;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;

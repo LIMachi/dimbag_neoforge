@@ -9,15 +9,16 @@ import com.limachi.lim_lib.registries.ClientRegistries;
 import com.limachi.lim_lib.registries.StaticInitClient;
 import com.limachi.lim_lib.registries.annotations.RegisterEntity;
 import net.minecraft.client.renderer.entity.ItemEntityRenderer;
-import net.minecraft.core.BlockPos;
 import net.minecraft.network.protocol.Packet;
 import net.minecraft.network.protocol.game.ClientGamePacketListener;
+import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.SimpleContainer;
 import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.item.ItemEntity;
 import net.minecraft.world.entity.npc.AbstractVillager;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.level.Level;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
@@ -56,6 +57,13 @@ public class BagItemEntity extends ItemEntity {
         this.setItem(stack);
         setPickUpDelay(40);
         setUnlimitedLifetime();
+        World.loadAround(this, this.chunkPosition(), true, true);
+    }
+
+    @Override
+    public void remove(@Nonnull RemovalReason reason) {
+        World.loadAround(this, this.chunkPosition(), false, true);
+        super.remove(reason);
     }
 
     @Nonnull
@@ -104,10 +112,18 @@ public class BagItemEntity extends ItemEntity {
 
     public int getBagId() { return BagItem.getBagId(getItem()); }
 
+    ChunkPos prevChunkPos = chunkPosition();
+
     @Override
     public void tick() {
-        if (!level().isClientSide)
-            BagsData.runOnBag(getBagId(), b->b.tick(this));
+        if (level() instanceof ServerLevel) {
+            if (prevChunkPos != chunkPosition()) {
+                World.loadAround(this, prevChunkPos, false, true);
+                World.loadAround(this, chunkPosition(), true, true);
+                prevChunkPos = chunkPosition();
+            }
+            BagsData.runOnBag(getBagId(), b -> b.tick(this));
+        }
         super.tick();
     }
 }

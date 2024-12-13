@@ -5,13 +5,16 @@ import com.limachi.dim_bag.items.BagItem;
 import com.limachi.dim_bag.items.bag_modes.SettingsMode;
 import com.limachi.dim_bag.menus.slots.*;
 import com.limachi.dim_bag.save_datas.BagsData;
+import com.limachi.dim_bag.save_datas.bag_data.BagInstance;
 import com.limachi.dim_bag.save_datas.bag_data.EnergyData;
 import com.limachi.dim_bag.save_datas.bag_data.SlotData;
 import com.limachi.dim_bag.save_datas.bag_data.TankData;
-import com.limachi.dim_bag.utils.Menus;
 import com.limachi.lim_lib.menus.IAcceptUpStreamNBT;
+import com.limachi.lim_lib.menus.slots.EquipSlot;
+import com.limachi.lim_lib.menus.slots.TogglableSlot;
 import com.limachi.lim_lib.network.NetworkManager;
 import com.limachi.lim_lib.registries.annotations.RegisterMenu;
+import com.limachi.lim_lib.utils.Menus;
 import com.limachi.lim_lib.widgetsOldOld.containerData.DataSlots;
 import net.minecraft.core.NonNullList;
 import net.minecraft.nbt.CompoundTag;
@@ -25,7 +28,6 @@ import net.minecraft.world.inventory.*;
 import net.minecraft.world.item.ItemStack;
 import net.minecraftforge.common.capabilities.ForgeCapabilities;
 import net.minecraftforge.common.util.LazyOptional;
-import net.minecraftforge.fluids.FluidStack;
 import net.minecraftforge.items.wrapper.InvWrapper;
 import net.minecraftforge.network.NetworkHooks;
 import net.minecraftforge.registries.RegistryObject;
@@ -65,7 +67,7 @@ public class BagMenu extends AbstractContainerMenu implements IAcceptUpStreamNBT
                     if (slots.get(i) instanceof BagSlot slot && slot.isActive())
                         initStates[i / 16] |= 1 << (i % 16);
                 for (int i = 36; i < 72; ++i)
-                    if (slots.get(i) instanceof TankSlot slot && slot.isActive())
+                    if (slots.get(i) instanceof BagTankSlot slot && slot.isActive())
                         initStates[i / 16] |= 1 << (i % 16);
                 for (int i = 0; i < 6; ++i)
                     slotStates.set(i, initStates[i]);
@@ -243,14 +245,14 @@ public class BagMenu extends AbstractContainerMenu implements IAcceptUpStreamNBT
         if (bagSlots.isPresent())
             for (int l = 0; l < 4; ++l)
                 for (int c = 0; c < 9; ++c)
-                    addSlot(new BagSlot(bagId, bagSlots.resolve().get().getSlot(l * 9 + c), 29 + c * 18, 17 + l * 18, s -> page.page == 0 && s.getItemHandler().getSlots() > 0));
+                    addSlot(new BagSlot(bagId, playerInventory.player, bagSlots.resolve().get().getSlot(l * 9 + c), 29 + c * 18, 17 + l * 18, s -> page.page == 0 && s.getItemHandler().getSlots() > 0));
         else
             for (int l = 0; l < 4; ++l)
                 for (int c = 0; c < 9; ++c) {
                     final int i = l * 9 + c;
                     addSlot(new BagSlot(29 + c * 18, 17 + l * 18, s -> page.page == 0 && slotStates.getActive(i)));
                 }
-        sections.add(new Menus.SlotSection(0, 35, false, false));
+        Menus.newSection(sections, slots, false, false);
 
         LazyOptional<TankData> bagTanks = tankDataHandle();
         bagTanks.ifPresent(d->{
@@ -267,7 +269,7 @@ public class BagMenu extends AbstractContainerMenu implements IAcceptUpStreamNBT
                     final int i = l * 9 + c;
                     addSlot(new BagTankSlot(29 + c * 18, 17 + l * 18, s -> page.page == 1 && slotStates.getActive(i + 36), () -> selectedTank.get() == i));
                 }
-        sections.add(new Menus.SlotSection(36, 71, false, false));
+        Menus.newSection(sections, slots, false, false);
 
         for (int i = 0; i < 4; ++i)
             addSlot(EquipSlot.armor(playerInventory.player, i, 7, 71 - 18 * i));
@@ -276,14 +278,14 @@ public class BagMenu extends AbstractContainerMenu implements IAcceptUpStreamNBT
             for (int j1 = 0; j1 < 9; ++j1)
                 addSlot(new TogglableSlot(playerInventory, j1 + l * 9 + 9, 29 + j1 * 18, 102 + l * 18, s->page.get() < 2));
 
-        sections.add(new Menus.SlotSection(72, slots.size() - 1, false, true));
+        Menus.newSection(sections, slots, false);
 
         for(int i1 = 0; i1 < 9; ++i1)
             this.addSlot(new Slot(playerInventory, i1, 29 + i1 * 18, 160));
 
         addSlot(EquipSlot.shield(playerInventory.player, 7, 102));
 
-        sections.add(new Menus.SlotSection(sections.get(2).toInclusive() + 1, slots.size() - 1, false, false));
+        Menus.newSection(sections, slots, false, false);
 
         addDataSlots(slotStates);
 
@@ -294,7 +296,7 @@ public class BagMenu extends AbstractContainerMenu implements IAcceptUpStreamNBT
                 if (slots.get(i) instanceof BagSlot slot && slot.isActive())
                     initStates[i / 16] |= 1 << (i % 16);
             for (int i = 36; i < 72; ++i)
-                if (slots.get(i) instanceof TankSlot slot && slot.isActive())
+                if (slots.get(i) instanceof BagTankSlot slot && slot.isActive())
                     initStates[i / 16] |= 1 << (i % 16);
 
             for (int i = 0; i < 6; ++i)
@@ -307,28 +309,24 @@ public class BagMenu extends AbstractContainerMenu implements IAcceptUpStreamNBT
         addDataSlots(maxEnergy);
     }
 
-    boolean fluidsAreStackable(FluidStack f1, FluidStack f2) {
-        return f1.isEmpty() || f2.isEmpty() || f1.isFluidEqual(f2);
-    }
-
     @Override
     public void clicked(int slot, int button, @Nonnull ClickType type, @Nonnull Player player) {
-        if (slot >= 0 && slot < slots.size() && slots.get(slot) instanceof TankSlot tank) {
+        if (slot >= 0 && slot < slots.size() && slots.get(slot) instanceof BagTankSlot tank) {
             if (!tank.isActive())
                 return;
-            if (getCarried().isEmpty()) {
-                FluidStack cmp = tank.getFluid();
-                for (int i = 0; i < slots.size(); ++i) {
-                    if (i == slot) continue;
-                    Slot search = slots.get(i);
-                    if (search.isActive() && !(search instanceof TankSlot) && !search.getItem().isEmpty() && !(search.getItem().getItem() instanceof BagItem)) {
-                        if (search.getItem().getCapability(ForgeCapabilities.FLUID_HANDLER_ITEM).map(h -> fluidsAreStackable(h.getFluidInTank(0), cmp)).orElse(false)) {
-                            setCarried(search.remove(1));
-                            break;
-                        }
-                    }
-                }
-            }
+//            if (getCarried().isEmpty()) {
+//                FluidStack cmp = tank.getFluid();
+//                for (int i = 0; i < slots.size(); ++i) {
+//                    if (i == slot) continue;
+//                    Slot search = slots.get(i);
+//                    if (search.isActive() && !(search instanceof BagTankSlot) && !search.getItem().isEmpty() && !(search.getItem().getItem() instanceof BagItem)) {
+//                        if (search.getItem().getCapability(ForgeCapabilities.FLUID_HANDLER_ITEM).map(h -> fluidsAreStackable(h.getFluidInTank(0), cmp)).orElse(false)) {
+//                            setCarried(search.remove(1));
+//                            break;
+//                        }
+//                    }
+//                }
+//            }
             if (getCarried().getCapability(ForgeCapabilities.FLUID_HANDLER_ITEM).isPresent())
                 Menus.interactWithFluidSlot(player, getCarried(), tank, new InvWrapper(player.getInventory())).ifPresent(this::setCarried);
             return;
@@ -344,6 +342,6 @@ public class BagMenu extends AbstractContainerMenu implements IAcceptUpStreamNBT
 
     @Override
     public boolean stillValid(@Nonnull Player player) {
-        return player.containerMenu.containerId == containerId && bagId != 0 && (DimBag.getBagAccess(player, bagId, false, true, true, true) == bagId || (getCarried().getItem() instanceof BagItem && BagItem.getBagId(getCarried()) == bagId));
+        return player.containerMenu.containerId == containerId && bagId != 0 && (DimBag.getBagAccess(player, bagId, false, true, true, true) == bagId || (getCarried().getItem() instanceof BagItem && BagItem.getBagId(getCarried()) == bagId) || BagsData.runOnBag(bagId, b->b.getHolder(false).map(e->e.blockPosition().distManhattan(player.blockPosition()) <= 9).orElse(false), true));
     }
 }

@@ -62,7 +62,7 @@ public class TankBlockEntityRenderer implements BlockEntityRenderer<TankModuleBl
 //                float r = color.x;
 //                float g = color.y;
 //                float b = color.z;
-                float qty = (((float) fs.getAmount()) / 8000f) - Z;
+                float qty = (((float) fs.getAmount()) / 1000f) - Z;
 
 //                float v1 = sprite.getV(16 * qty);
 

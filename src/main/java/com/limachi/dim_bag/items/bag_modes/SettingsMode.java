@@ -8,7 +8,7 @@ import com.limachi.dim_bag.items.BagItem;
 import com.limachi.dim_bag.menus.BagMenu;
 import com.limachi.dim_bag.save_datas.BagsData;
 import com.limachi.lim_lib.KeyMapController;
-import com.limachi.lim_lib.PlayerUtils;
+import com.limachi.lim_lib.utils.PlayerUtils;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.world.InteractionHand;
@@ -51,7 +51,7 @@ public class SettingsMode extends BaseMode {
         if (ctx.getLevel().getBlockState(ctx.getClickedPos()).getBlock() instanceof BaseModule module)
             if (BagsData.runOnBag(ctx.getLevel(), ctx.getClickedPos(), b->module.wrench(b, ctx.getPlayer(), ctx.getLevel(), ctx.getClickedPos(), ctx.getItemInHand(), new BlockHitResult(ctx.getClickLocation(), ctx.getClickedFace(), ctx.getClickedPos(), ctx.isInside())), false))
                 return InteractionResult.SUCCESS;
-        if (ctx.getPlayer() != null && BagsData.runOnBag(ctx.getLevel(), target, b->b.isWall(target), false)) {
+        if (ctx.getPlayer() != null && BagsData.runOnBag(ctx.getLevel(), target, b->b.getRoom().isWall(target), false)) {
             ItemStack offStack = ctx.getPlayer().getOffhandItem();
             if (offStack.getItem() instanceof BlockItem bi) {
                 BlockState original = ctx.getLevel().getBlockState(target);
@@ -98,9 +98,9 @@ public class SettingsMode extends BaseMode {
                     if (bs.getBlock() instanceof IBagModule module) {
                         ItemStack out = bs.getBlock().getCloneItemStack(player.level(), pos, bs);
                         module.uninstall(bag, player, player.level(), pos, out);
-                        player.level().setBlockAndUpdate(pos, bag.isWall(pos) ? WallBlock.R_BLOCK.get().defaultBlockState() : Blocks.AIR.defaultBlockState());
+                        player.level().setBlockAndUpdate(pos, bag.getRoom().isWall(pos) ? WallBlock.R_BLOCK.get().defaultBlockState() : Blocks.AIR.defaultBlockState());
                         PlayerUtils.giveOrDrop(player, out);
-                    } else if (bag.isWall(pos)) {
+                    } else if (bag.getRoom().isWall(pos)) {
                         ItemStack out = bs.getCloneItemStack(new BlockHitResult(new Vec3(pos.getX() + 0.5, pos.getY() + 0.5, pos.getZ() + 0.5), Direction.UP, pos, true), player.level(), pos, player);
                         if (!out.isEmpty())
                             PlayerUtils.giveOrDrop(player, out);

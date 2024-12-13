@@ -6,10 +6,10 @@
     },
     [
       {
-        "item": "minecraft:item_frame"
+        "item": "minecraft:chest"
       },
       {
-        "item": "minecraft:glow_item_frame"
+        "item": "minecraft:trapped_chest"
       }
     ]
   ],

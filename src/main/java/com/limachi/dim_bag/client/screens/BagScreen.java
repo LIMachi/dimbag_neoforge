@@ -1,24 +1,25 @@
 package com.limachi.dim_bag.client.screens;
 
 import com.limachi.dim_bag.DimBag;
-import com.limachi.dim_bag.client.widgets.*;
 import com.limachi.dim_bag.items.BagItem;
 import com.limachi.dim_bag.items.bag_modes.ModesRegistry;
 import com.limachi.dim_bag.items.bag_modes.SettingsMode;
 import com.limachi.dim_bag.items.bag_modes.TankMode;
 import com.limachi.dim_bag.menus.BagMenu;
 import com.limachi.dim_bag.menus.slots.BagSlot;
-import com.limachi.dim_bag.menus.slots.TankSlot;
+import com.limachi.dim_bag.menus.slots.BagTankSlot;
 import com.limachi.dim_bag.save_datas.bag_data.BagInstance;
-import com.limachi.dim_bag.utils.Tags;
 import com.limachi.lim_lib.network.messages.ScreenNBTMsg;
 import com.limachi.lim_lib.registries.clientAnnotations.RegisterMenuScreen;
 import com.limachi.lim_lib.render.GuiUtils;
+import com.limachi.lim_lib.utils.Tags;
+import com.limachi.lim_lib.widgets.*;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.Checkbox;
 import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
+import net.minecraft.network.chat.MutableComponent;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.util.Mth;
 import net.minecraft.world.entity.player.Inventory;
@@ -29,6 +30,7 @@ import net.minecraftforge.api.distmarker.OnlyIn;
 import org.lwjgl.glfw.GLFW;
 
 import javax.annotation.Nonnull;
+import java.util.List;
 
 @OnlyIn(Dist.CLIENT)
 @RegisterMenuScreen
@@ -40,6 +42,8 @@ public class BagScreen extends AbstractContainerScreen<BagMenu> {
 
     public static final ResourceLocation BACKGROUND = new ResourceLocation(DimBag.MOD_ID, "textures/screen/bag_inventory.png");
     public static final ResourceLocation ENERGY_BAR = new ResourceLocation(DimBag.MOD_ID, "textures/screen/slots/energy.png");
+    public static final ResourceLocation FLUID_SLOT_OVERLAY = new ResourceLocation(DimBag.MOD_ID, "textures/screen/slots/fluid_slot_overlay.png");
+    public static final ResourceLocation SELECTED_FLUID_SLOT = new ResourceLocation(DimBag.MOD_ID, "textures/screen/slots/selected_fluid_slot_overlay.png");
     public static final int BACKGROUND_WIDTH = 218;
     public static final int BACKGROUND_HEIGHT = 184;
 
@@ -170,7 +174,18 @@ public class BagScreen extends AbstractContainerScreen<BagMenu> {
     public void render(@Nonnull GuiGraphics gui, int mouseX, int mouseY, float partialTick) {
         this.renderBackground(gui);
         super.render(gui, mouseX, mouseY, partialTick);
+        for (Slot slot : menu.slots)
+            if (slot instanceof BagTankSlot bts && slot.isActive() && bts.selected())
+                gui.blit(SELECTED_FLUID_SLOT, slot.x - 1 + getGuiLeft(), slot.y - 1 + getGuiTop(), 100, 0, 0, 18, 18, 18, 18);
         this.renderTooltip(gui, mouseX, mouseY);
+    }
+
+    @Override
+    @Nonnull
+    protected List<Component> getTooltipFromContainerItem(@Nonnull ItemStack stack) {
+        if (hoveredSlot != null)
+            return SlotScreen.slotTooltip(hoveredSlot, stack);
+        return super.getTooltipFromContainerItem(stack);
     }
 
     @Override
@@ -184,9 +199,9 @@ public class BagScreen extends AbstractContainerScreen<BagMenu> {
         } else if (menu.page.get() == 1) {
             gui.blit(BACKGROUND, getGuiLeft(), getGuiTop() + 131, 0, imageHeight, 24, 23, 256, 256);
             for (Slot slot : menu.slots)
-                if (slot instanceof TankSlot && !slot.isActive()) {
+                if (slot instanceof BagTankSlot && !slot.isActive()) {
                     GuiUtils.slots(gui, slot.x - 1, slot.y - 1, 1, 1, true);
-                    gui.blit(TankSlot.FluidRenderer.FLUID_SLOT_OVERLAY, slot.x - 1 + getGuiLeft(), slot.y - 1 + getGuiTop(), 0, 0, 18, 18, 16, 16);
+                    gui.blit(FLUID_SLOT_OVERLAY, slot.x - 1 + getGuiLeft(), slot.y - 1 + getGuiTop(), 0, 0, 18, 18, 16, 16);
                 }
         }
         else if (menu.page.get() == 2) {

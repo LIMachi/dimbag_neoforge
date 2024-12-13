@@ -1,13 +1,9 @@
 package com.limachi.dim_bag.menus.slots;
 
-import com.limachi.dim_bag.DimBag;
 import com.limachi.dim_bag.save_datas.BagsData;
-import com.limachi.dim_bag.utils.SimpleTank;
-import net.minecraft.client.gui.GuiGraphics;
+import com.limachi.lim_lib.menus.slots.TankSlot;
+import com.limachi.lim_lib.utils.SimpleTank;
 import net.minecraft.core.BlockPos;
-import net.minecraft.resources.ResourceLocation;
-import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.api.distmarker.OnlyIn;
 import net.minecraftforge.common.util.LazyOptional;
 import net.minecraftforge.fluids.IFluidTank;
 
@@ -15,7 +11,6 @@ import java.util.function.Function;
 import java.util.function.Supplier;
 
 public class BagTankSlot extends TankSlot {
-    public static final ResourceLocation SELECTED_FLUID_SLOT = new ResourceLocation(DimBag.MOD_ID, "textures/screen/slots/selected_fluid_slot_overlay.png");
 
     public int bag;
     public BlockPos tank;
@@ -51,11 +46,9 @@ public class BagTankSlot extends TankSlot {
         tankAccess = null;
     }
 
-    @OnlyIn(Dist.CLIENT)
-    @Override
-    public void renderSlot(GuiGraphics gui) {
-        super.renderSlot(gui);
-        if (isSelected.get())
-            gui.blit(SELECTED_FLUID_SLOT, x - 1, y - 1, 100, 0, 0, 18, 18, 18, 18);
+    public boolean selected() {
+        if (isSelected == null)
+            return false;
+        return isSelected.get();
     }
 }

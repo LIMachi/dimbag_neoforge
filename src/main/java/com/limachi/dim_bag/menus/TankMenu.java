@@ -5,6 +5,7 @@ import com.limachi.dim_bag.save_datas.BagsData;
 import com.limachi.dim_bag.save_datas.bag_data.TankData;
 import com.limachi.lim_lib.menus.IAcceptUpStreamNBT;
 import com.limachi.lim_lib.registries.annotations.RegisterMenu;
+import com.limachi.lim_lib.utils.Menus;
 import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.FriendlyByteBuf;
@@ -14,9 +15,12 @@ import net.minecraft.world.SimpleMenuProvider;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.inventory.AbstractContainerMenu;
+import net.minecraft.world.inventory.ClickType;
 import net.minecraft.world.inventory.MenuType;
 import net.minecraft.world.inventory.Slot;
 import net.minecraft.world.item.ItemStack;
+import net.minecraftforge.common.capabilities.ForgeCapabilities;
+import net.minecraftforge.items.wrapper.InvWrapper;
 import net.minecraftforge.network.NetworkHooks;
 import net.minecraftforge.registries.RegistryObject;
 
@@ -46,6 +50,18 @@ public class TankMenu extends AbstractContainerMenu implements IAcceptUpStreamNB
     }
 
     public TankMenu(int id, Inventory playerInventory, FriendlyByteBuf buff) { this(id, playerInventory, 0, null); }
+
+    @Override
+    public void clicked(int slot, int button, @Nonnull ClickType type, @Nonnull Player player) {
+        if (slot >= 0 && slot < slots.size() && slots.get(slot) instanceof BagTankSlot tank) {
+            if (!tank.isActive())
+                return;
+            if (getCarried().getCapability(ForgeCapabilities.FLUID_HANDLER_ITEM).isPresent())
+                Menus.interactWithFluidSlot(player, getCarried(), tank, new InvWrapper(player.getInventory())).ifPresent(this::setCarried);
+            return;
+        }
+        super.clicked(slot, button, type, player);
+    }
 
     @Override
     @Nonnull

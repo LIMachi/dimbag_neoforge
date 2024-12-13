@@ -44,6 +44,11 @@ public abstract class BaseModule extends Block implements IBagModule {
     }
 
     @Override
+    public String name() {
+        return name;
+    }
+
+    @Override
     public int getLightEmission(BlockState state, BlockGetter level, BlockPos pos) {
         return pos.distManhattan(DimBag.INVALID_POS) < 1000 ? 15 : super.getLightEmission(state, level, pos);
     }
@@ -55,7 +60,7 @@ public abstract class BaseModule extends Block implements IBagModule {
             CompoundTag tag = stack.getTag();
             if (tag != null && tag.contains("label", Tag.TAG_STRING)) {
                 Component label = Component.Serializer.fromJson(tag.getString("label"));
-                if (!event.getItemStack().getHoverName().equals(label))
+                if (!event.getItemStack().getHoverName().equals(label) && !event.getToolTip().contains(label))
                     event.getToolTip().add(1, label);
             }
         }

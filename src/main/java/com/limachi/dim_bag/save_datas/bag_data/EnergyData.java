@@ -2,6 +2,7 @@ package com.limachi.dim_bag.save_datas.bag_data;
 
 import com.limachi.dim_bag.blocks.bag_modules.BatteryModule;
 import com.limachi.lim_lib.Configs;
+import net.minecraft.util.Mth;
 import net.minecraftforge.common.util.LazyOptional;
 import net.minecraftforge.energy.IEnergyStorage;
 
@@ -76,7 +77,7 @@ public class EnergyData implements IEnergyStorage {
     public int getEnergyStored() { return (int)totalEnergyStored; }
 
     public long trueMaxEnergyStored() {
-        return ENERGY_STORAGE_PER_BATTERY * (long)bag.getAllModules(BatteryModule.NAME).getAllKeys().size();
+        return ENERGY_STORAGE_PER_BATTERY * (long)bag.getAllModules(BatteryModule.NAME).getAllKeys().size() * storageMultiplier();
     }
 
     @Override
@@ -87,4 +88,8 @@ public class EnergyData implements IEnergyStorage {
 
     @Override
     public boolean canReceive() { return bag.isModulePresent(BatteryModule.NAME); }
+
+    public int storageMultiplier() {
+        return Mth.clamp(bag.getAllModules("compression").getAllKeys().size() * 2, 1, 2 * 65536);
+    }
 }

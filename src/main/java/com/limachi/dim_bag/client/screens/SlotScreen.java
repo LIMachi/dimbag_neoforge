@@ -1,20 +1,25 @@
 package com.limachi.dim_bag.client.screens;
 
-import com.limachi.dim_bag.client.widgets.TextEdit;
 import com.limachi.dim_bag.menus.SlotMenu;
+import com.limachi.dim_bag.menus.slots.BagSlot;
 import com.limachi.lim_lib.network.messages.ScreenNBTMsg;
 import com.limachi.lim_lib.registries.clientAnnotations.RegisterMenuScreen;
 import com.limachi.lim_lib.render.GuiUtils;
+import com.limachi.lim_lib.widgets.TextEdit;
+import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
+import net.minecraft.network.chat.MutableComponent;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.inventory.Slot;
+import net.minecraft.world.item.ItemStack;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
 
 import javax.annotation.Nonnull;
+import java.util.List;
 
 @OnlyIn(Dist.CLIENT)
 @RegisterMenuScreen
@@ -46,8 +51,28 @@ public class SlotScreen extends AbstractContainerScreen<SlotMenu> {
     }
 
     @Override
-    protected void renderLabels(GuiGraphics p_281635_, int p_282681_, int p_283686_) {
-        super.renderLabels(p_281635_, p_282681_, p_283686_);
+    protected void renderLabels(@Nonnull GuiGraphics gui, int mouseX, int mouseY) {
+        super.renderLabels(gui, mouseX, mouseY);
+    }
+
+    @Nonnull
+    public static List<Component> slotTooltip(@Nonnull Slot slot, @Nonnull ItemStack stack) {
+        List<Component> tooltip = getTooltipFromItem(Minecraft.getInstance(), stack);
+        if (slot instanceof BagSlot bagSlot && !stack.isEmpty() && !tooltip.isEmpty()) {
+            if (hasShiftDown() || stack.getCount() <= stack.getMaxStackSize())
+                tooltip.set(0, ((MutableComponent) tooltip.get(0)).append(Component.translatable("screen.bag_slot.size_acronym_extended", stack.getCount(), bagSlot.getMaxStackSize(stack))));
+            else
+                tooltip.set(0, ((MutableComponent) tooltip.get(0)).append(Component.translatable("screen.bag_slot.size_acronym", stack.getCount() / stack.getMaxStackSize(), stack.getCount() % stack.getMaxStackSize(), bagSlot.maxSizeInStacks())));
+        }
+        return tooltip;
+    }
+
+    @Override
+    @Nonnull
+    protected List<Component> getTooltipFromContainerItem(@Nonnull ItemStack stack) {
+        if (hoveredSlot != null)
+            return slotTooltip(hoveredSlot, stack);
+        return super.getTooltipFromContainerItem(stack);
     }
 
     @Override

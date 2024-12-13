@@ -1,0 +1,26 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "pattern": [
+    "STS",
+    "BEB",
+    "STS"
+  ],
+  "key": {
+    "S": {
+      "item": "dim_bag:slot_module"
+    },
+    "T": {
+      "item": "dim_bag:tank_module"
+    },
+    "B": {
+      "item": "dim_bag:battery_module"
+    },
+    "E": {
+      "item": "minecraft:ender_chest"
+    }
+  },
+  "result": {
+    "item": "dim_bag:compression_module",
+    "count": 1
+  }
+}

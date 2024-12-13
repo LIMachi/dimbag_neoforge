@@ -26,7 +26,7 @@ public class DefaultMode extends BaseMode {
         if (KeyMapController.SNEAK.getState(player)) {
             int bag = BagItem.getBagId(player.getItemInHand(hand));
             if (BagsData.runOnBag(bag, b->{
-                if (b.getModeData(SettingsMode.NAME).getBoolean("quick_enter") && !(player.level().dimension().equals(DimBag.BAG_DIM) && b.isInRoom(player.blockPosition()))) {
+                if (b.getModeData(SettingsMode.NAME).getBoolean("quick_enter") && !(player.level().dimension().equals(DimBag.BAG_DIM) && b.getRoom().isInside(player.blockPosition()))) {
                     if (!b.isModulePresent(ParadoxModule.PARADOX_KEY))
                         BagItem.unequipBags(player, b.bagId(), player.level(), player.blockPosition(), false);
                     b.enter(player, false);
@@ -54,7 +54,7 @@ public class DefaultMode extends BaseMode {
                 BlockPos at = ctx.getClickedPos().relative(ctx.getClickedFace());
                 if (KeyMapController.SNEAK.getState(player)) {
                     if (BagsData.runOnBag(bag, b->{
-                        if (b.getModeData(SettingsMode.NAME).getBoolean("quick_enter") && !(player.level().dimension().equals(DimBag.BAG_DIM) && b.isInRoom(player.blockPosition()))) {
+                        if (b.getModeData(SettingsMode.NAME).getBoolean("quick_enter") && !(player.level().dimension().equals(DimBag.BAG_DIM) && b.getRoom().isInside(player.blockPosition()))) {
                             if (!b.isModulePresent(ParadoxModule.PARADOX_KEY))
                                 BagItem.unequipBags(player, id, player.level(), at, false);
                             b.enter(player, false);

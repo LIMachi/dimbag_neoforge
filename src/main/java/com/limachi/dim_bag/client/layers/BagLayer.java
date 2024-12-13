@@ -3,6 +3,7 @@ package com.limachi.dim_bag.client.layers;
 import com.limachi.dim_bag.DimBag;
 import com.limachi.dim_bag.client.models.BagEntityModel;
 import com.limachi.dim_bag.client.renderers.entities.BagEntityRenderer;
+import com.limachi.dim_bag.other.BagVisibilities;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
 import net.minecraft.client.model.EntityModel;
@@ -16,6 +17,7 @@ import net.minecraft.client.renderer.entity.layers.RenderLayer;
 import net.minecraft.client.renderer.entity.player.PlayerRenderer;
 import net.minecraft.client.renderer.texture.OverlayTexture;
 import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.player.Player;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
 import net.minecraftforge.client.event.EntityRenderersEvent;
@@ -46,7 +48,7 @@ public class BagLayer<T extends LivingEntity, M extends EntityModel<T>> extends 
 
     @Override
     public void render(PoseStack pose, MultiBufferSource buffer, int packedLight, T entity, float limbSwing, float limbSwingAmount, float partialTicks, float ageInTicks, float netHeadYaw, float headPitch) {
-        if (!entity.isInvisible() && DimBag.getBagAccess(entity, 0, true, false, false, false) > 0) {
+        if (!entity.isInvisible() && entity instanceof Player player && BagVisibilities.shouldShowBag(player)) {
 //            pose.pushPose();
             getParentModel().copyPropertiesTo(model);
             if (getParentModel() instanceof HumanoidModel<?> humanoid)

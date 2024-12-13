@@ -4,6 +4,7 @@ import com.limachi.dim_bag.DimBag;
 import com.limachi.dim_bag.block_entities.IRenderUsingItemTag;
 import com.limachi.dim_bag.save_datas.BagsData;
 import com.limachi.dim_bag.save_datas.bag_data.BagInstance;
+import com.limachi.dim_bag.save_datas.bag_data.SlotData;
 import com.limachi.lim_lib.World;
 import com.limachi.lim_lib.registries.annotations.RegisterBlockEntity;
 import net.minecraft.core.BlockPos;
@@ -18,7 +19,6 @@ import net.minecraft.world.level.block.state.BlockState;
 import net.minecraftforge.common.capabilities.Capability;
 import net.minecraftforge.common.capabilities.ForgeCapabilities;
 import net.minecraftforge.common.util.LazyOptional;
-import net.minecraftforge.items.IItemHandler;
 import net.minecraftforge.registries.RegistryObject;
 
 import javax.annotation.Nonnull;
@@ -31,7 +31,7 @@ public class SlotModuleBlockEntity extends BlockEntity implements IRenderUsingIt
 
     public SlotModuleBlockEntity(BlockPos pos, BlockState state) { super(R_TYPE.get(), pos, state); }
 
-    private LazyOptional<IItemHandler> slotHandle = null;
+    private LazyOptional<SlotData.SlotEntry> slotHandle = null;
     public ItemStack renderStack = ItemStack.EMPTY;
 
     @Override

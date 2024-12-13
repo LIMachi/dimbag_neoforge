@@ -2,11 +2,12 @@ package com.limachi.dim_bag.save_datas.bag_data;
 
 import com.limachi.dim_bag.items.BagItem;
 import com.limachi.dim_bag.items.VirtualBagItem;
-import com.limachi.dim_bag.utils.SimpleTank;
+import com.limachi.lim_lib.utils.SimpleTank;
 import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.ListTag;
 import net.minecraft.network.chat.Component;
+import net.minecraft.util.Mth;
 import net.minecraft.world.item.ItemStack;
 import net.minecraftforge.common.util.LazyOptional;
 import net.minecraftforge.fluids.FluidStack;
@@ -25,10 +26,12 @@ public class TankData implements IFluidHandlerItem {
 
     public static class TankEntry extends SimpleTank {
         private final BlockPos pos;
+        private final TankData holder;
         private Component label;
 
-        public TankEntry(CompoundTag data) {
-            super(data.contains("capacity") ? data.getInt("capacity") : DEFAULT_CAPACITY, FluidStack.loadFluidStackFromNBT(data));
+        public TankEntry(TankData holder, CompoundTag data) {
+            super(data.contains("capacity") ? data.getInt("capacity") : DEFAULT_CAPACITY, FluidStack.loadFluidStackFromNBT(data), false);
+            this.holder = holder;
             pos = BlockPos.of(data.getLong(BagInstance.POSITION));
             label = Component.Serializer.fromJson(data.getString("label"));
             if (label == null)
@@ -42,19 +45,24 @@ public class TankData implements IFluidHandlerItem {
             out.putString("label", Component.Serializer.toJson(label));
             return out;
         }
+
+        @Override
+        public int getCapacity() {
+            return capacity * holder.storageMultiplier();
+        }
     }
 
-    private final int bag;
+    private final BagInstance bag;
     private final ArrayList<TankEntry> tanks = new ArrayList<>();
     private final HashMap<BlockPos, LazyOptional<TankEntry>> handles = new HashMap<>();
 
     private ItemStack container = null;
     private final Supplier<CompoundTag> mode;
 
-    protected TankData(int bag, ListTag tanks, Supplier<CompoundTag> mode) {
+    protected TankData(BagInstance bag, ListTag tanks, Supplier<CompoundTag> mode) {
         this.bag = bag;
         for (int i = 0; i < tanks.size(); ++i)
-            this.tanks.add(new TankEntry(tanks.getCompound(i)));
+            this.tanks.add(new TankEntry(this, tanks.getCompound(i)));
         this.mode = mode;
     }
 
@@ -80,7 +88,7 @@ public class TankData implements IFluidHandlerItem {
         if (container != null)
             return container;
         ItemStack out = new ItemStack(VirtualBagItem.R_ITEM.get());
-        out.getOrCreateTag().putInt(BagItem.BAG_ID_KEY, bag);
+        out.getOrCreateTag().putInt(BagItem.BAG_ID_KEY, bag.bagId());
         return out;
     }
 
@@ -139,7 +147,7 @@ public class TankData implements IFluidHandlerItem {
             prev.invalidate();
         }
         data.putLong(BagInstance.POSITION, pos.asLong());
-        tanks.add(new TankEntry(data));
+        tanks.add(new TankEntry(this, data));
         if (handle != null)
             handle.invalidate(); //we invalidate the global handle to force all global inventories to reload
         handle = null;
@@ -246,5 +254,9 @@ public class TankData implements IFluidHandlerItem {
                 return drain(target, action);
             }
         return FluidStack.EMPTY;
+    }
+
+    public int storageMultiplier() {
+        return Mth.clamp(bag.getAllModules("compression").getAllKeys().size() * 2, 1, 2 * 65536);
     }
 }

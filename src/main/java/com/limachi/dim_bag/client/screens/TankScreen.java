@@ -1,11 +1,11 @@
 package com.limachi.dim_bag.client.screens;
 
-import com.limachi.dim_bag.client.widgets.TextEdit;
 import com.limachi.dim_bag.menus.TankMenu;
-import com.limachi.dim_bag.menus.slots.TankSlot;
+import com.limachi.lim_lib.menus.slots.TankSlot;
 import com.limachi.lim_lib.network.messages.ScreenNBTMsg;
 import com.limachi.lim_lib.registries.clientAnnotations.RegisterMenuScreen;
 import com.limachi.lim_lib.render.GuiUtils;
+import com.limachi.lim_lib.widgets.TextEdit;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
 import net.minecraft.nbt.CompoundTag;
@@ -50,14 +50,6 @@ public class TankScreen extends AbstractContainerScreen<TankMenu> {
     protected void renderLabels(GuiGraphics p_281635_, int p_282681_, int p_283686_) {
         super.renderLabels(p_281635_, p_282681_, p_283686_);
     }
-
-//    @Override
-//    public void renderSlot(@Nonnull GuiGraphics gui, @Nonnull Slot slot) {
-//        if (slot instanceof TankSlot tank)
-//            tank.renderSlot(gui);
-//        else
-//            super.renderSlot(gui, slot);
-//    }
 
     @Override
     protected void renderBg(@Nonnull GuiGraphics gui, float partialTick, int mouseX, int mouseY) {

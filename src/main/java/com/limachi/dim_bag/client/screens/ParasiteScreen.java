@@ -1,12 +1,15 @@
 package com.limachi.dim_bag.client.screens;
 
-import com.limachi.dim_bag.client.widgets.*;
 import com.limachi.dim_bag.entities.utils.Actuator;
 import com.limachi.dim_bag.menus.ParasiteMenu;
-import com.limachi.dim_bag.utils.Tags;
 import com.limachi.lim_lib.network.messages.ScreenNBTMsg;
 import com.limachi.lim_lib.registries.clientAnnotations.RegisterMenuScreen;
 import com.limachi.lim_lib.render.GuiUtils;
+import com.limachi.lim_lib.utils.Tags;
+import com.limachi.lim_lib.widgets.ICatchEsc;
+import com.limachi.lim_lib.widgets.TextEdit;
+import com.limachi.lim_lib.widgets.TextEditWithSuggestions;
+import com.limachi.lim_lib.widgets.VerticalSlider;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
 import net.minecraft.network.chat.Component;

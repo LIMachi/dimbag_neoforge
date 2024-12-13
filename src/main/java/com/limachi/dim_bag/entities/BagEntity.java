@@ -1,7 +1,7 @@
 package com.limachi.dim_bag.entities;
 
 import com.limachi.dim_bag.DimBag;
-import com.limachi.dim_bag.blocks.bag_modules.BaseModule;
+import com.limachi.dim_bag.blocks.bag_modules.IBagModule;
 import com.limachi.dim_bag.blocks.bag_modules.ParasiteModule;
 import com.limachi.dim_bag.items.BagItem;
 import com.limachi.dim_bag.items.bag_modes.ParasiteMode;
@@ -11,10 +11,10 @@ import com.limachi.dim_bag.save_datas.bag_data.BagInstance;
 import com.limachi.dim_bag.save_datas.bag_data.SlotData;
 import com.limachi.lim_lib.ISpecialEntityRider;
 import com.limachi.lim_lib.KeyMapController;
-import com.limachi.lim_lib.PlayerUtils;
 import com.limachi.lim_lib.World;
 import com.limachi.lim_lib.registries.annotations.EntityAttributeBuilder;
 import com.limachi.lim_lib.registries.annotations.RegisterEntity;
+import com.limachi.lim_lib.utils.PlayerUtils;
 import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.Container;
@@ -34,6 +34,7 @@ import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.entity.vehicle.Boat;
 import net.minecraft.world.item.BlockItem;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.phys.AABB;
 import net.minecraftforge.common.capabilities.Capability;
@@ -64,7 +65,14 @@ public class BagEntity extends Mob implements Container, ISpecialEntityRider {
         out.moveTo(x, y, z);
         out.getPersistentData().putInt(BagItem.BAG_ID_KEY, id);
         lvl.addFreshEntity(out);
+        World.loadAround(out, out.chunkPosition(), true, true);
         return out;
+    }
+
+    @Override
+    public void remove(@Nonnull RemovalReason reason) {
+        World.loadAround(this, this.chunkPosition(), false, true);
+        super.remove(reason);
     }
 
     public static BagEntity create(Level lvl, BlockPos pos, int id) {
@@ -136,9 +144,16 @@ public class BagEntity extends Mob implements Container, ISpecialEntityRider {
     @Override
     public boolean isAlwaysTicking() { return true; }
 
+    ChunkPos prevChunkPos = chunkPosition();
+
     @Override
     public void tick() {
-        if (!level().isClientSide) {
+        if (level() instanceof ServerLevel) {
+            if (prevChunkPos != chunkPosition()) {
+                World.loadAround(this, prevChunkPos, false, true);
+                World.loadAround(this, chunkPosition(), true, true);
+                prevChunkPos = chunkPosition();
+            }
             BagsData.runOnBag(getBagId(), b->{
                 Entity entity = this.getVehicle();
                 if (entity == null)
@@ -195,21 +210,25 @@ public class BagEntity extends Mob implements Container, ISpecialEntityRider {
     @Nonnull
     public InteractionResult mobInteract(Player player, @Nonnull InteractionHand hand) {
         if (player.level().isClientSide) return InteractionResult.SUCCESS;
-        if (player.getItemInHand(hand).getItem() instanceof BlockItem bi && bi.getBlock() instanceof BaseModule module) {
+        if (player.getItemInHand(hand).getItem() instanceof BlockItem bi && bi.getBlock() instanceof IBagModule module) {
             int id = getBagId();
             ItemStack stack = player.getItemInHand(hand);
             if (id > 0 && World.getLevel(DimBag.BAG_DIM) instanceof ServerLevel level) {
                 BagsData.runOnBag(getBagId(), b->{
                     if (module.canInstall(b)) {
-                        BlockPos pos = b.getAnyInstallPosition();
+                        BlockPos pos = b.getRoom().getAnyInstallPosition();
                         if (pos != null) {
-                            level.setBlockAndUpdate(pos, module.defaultBlockState());
+                            level.setBlockAndUpdate(pos, bi.getBlock().defaultBlockState());
                             module.install(b, player, level, pos, stack);
+                            if (!player.isCreative()) {
+                                stack.shrink(1);
+                                player.setItemInHand(hand, stack);
+                            }
+                        } else {
+                            //can't install (no valid position)
                         }
-                        if (!player.isCreative()) {
-                            stack.shrink(1);
-                            player.setItemInHand(hand, stack);
-                        }
+                    } else {
+                        //can't install (prevented by module)
                     }
                 });
                 return InteractionResult.SUCCESS;

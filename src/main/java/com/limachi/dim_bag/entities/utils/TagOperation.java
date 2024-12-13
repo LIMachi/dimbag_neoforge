@@ -1,7 +1,7 @@
 package com.limachi.dim_bag.entities.utils;
 
 import com.google.common.collect.ImmutableList;
-import com.limachi.dim_bag.utils.Tags;
+import com.limachi.lim_lib.utils.Tags;
 import net.minecraft.nbt.*;
 import net.minecraft.util.Mth;
 

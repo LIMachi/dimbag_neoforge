@@ -22,7 +22,7 @@ public class WallPusherItem extends Item {
     @Override
     @Nonnull
     public InteractionResult useOn(@Nonnull UseOnContext ctx) {
-        if (ctx.getPlayer() instanceof ServerPlayer player && BagsData.runOnBag(ctx.getLevel(), ctx.getClickedPos(), b->b.pushWall(ctx.getClickedPos()), false)) {
+        if (ctx.getPlayer() instanceof ServerPlayer player && BagsData.runOnBag(ctx.getLevel(), ctx.getClickedPos(), b->b.getRoom().pushWall(ctx.getClickedPos()), false)) {
             if (!player.isCreative()) {
                 ItemStack stack = ctx.getItemInHand();
                 stack.shrink(1);

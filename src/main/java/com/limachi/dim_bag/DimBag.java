@@ -6,28 +6,47 @@ import com.limachi.dim_bag.entities.BagItemEntity;
 import com.limachi.dim_bag.items.BagItem;
 import com.limachi.dim_bag.items.VirtualBagItem;
 import com.limachi.dim_bag.save_datas.BagsData;
+import com.limachi.dim_bag.save_datas.bag_data.BagInstance;
+import com.limachi.dim_bag.save_datas.bag_data.RoomData;
 import com.limachi.lim_lib.KeyMapController;
 import com.limachi.lim_lib.ModBase;
 import com.limachi.lim_lib.integration.Curios.CuriosIntegration;
+import com.limachi.lim_lib.network.IRecordMsg;
+import com.limachi.lim_lib.network.RegisterMsg;
 import com.mojang.blaze3d.platform.InputConstants;
+import com.mojang.datafixers.util.Pair;
 import net.minecraft.core.BlockPos;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.util.Mth;
 import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.phys.AABB;
 import net.minecraftforge.fml.common.Mod;
 
-import java.util.List;
+import java.util.*;
 import java.util.function.Predicate;
 
 @Mod(DimBag.MOD_ID)
-@Mod.EventBusSubscriber(modid = DimBag.MOD_ID, bus = Mod.EventBusSubscriber.Bus.MOD)
+@Mod.EventBusSubscriber(modid = DimBag.MOD_ID)
 public class DimBag extends ModBase {
+    public static final ArrayList<Pair<BlockPos, BlockPos>> CLIENT_SIDE_ROOM_SIZES = new ArrayList<>();
     public static final String MOD_ID = "dim_bag";
-
     public static final BlockPos INVALID_POS = new BlockPos((1 << 25) - 1, (1 << 11) - 1, (1 << 25) - 1); //highest representable blockpos (adding 1 to any of x, y, or z would result in a wrap when converting to and from long)
+
+    @RegisterMsg
+    public record ClientSideRoomSizeUpdate(int room, BlockPos min, BlockPos max) implements IRecordMsg {
+        @Override
+        public void clientWork(Player player) {
+            while (CLIENT_SIDE_ROOM_SIZES.size() <= room)
+                CLIENT_SIDE_ROOM_SIZES.add(new Pair<>(INVALID_POS, INVALID_POS));
+            CLIENT_SIDE_ROOM_SIZES.set(room, new Pair<>(min, max));
+        }
+    }
+
     public static final KeyMapController.GlobalKeyBinding BAG_KEY = KeyMapController.registerKeyBind("key.bag_action", InputConstants.KEY_LALT, "key.categories.dim_bag");
 
     public static final ResourceKey<Level> BAG_DIM = ResourceKey.create(net.minecraft.core.registries.Registries.DIMENSION, new ResourceLocation(DimBag.MOD_ID, "bag"));
@@ -74,6 +93,34 @@ public class DimBag extends ModBase {
                         if (entity.level().getBlockEntity(new BlockPos(x, y, z)) instanceof ProxyBlockEntity proxy && proxy.hasBagAccess(id, realOnly))
                             return proxy.getBag();
         return out;
+    }
+
+    public static BlockPos roomCenter(int id) { return new BlockPos(8 + (id - 1) * BagsData.ROOM_SPACING, 128, 8); }
+
+    public static int closestRoomId(BlockPos pos) {
+        int max;
+        if (BagsData.getInstance() != null)
+            max = BagsData.max();
+        else
+            max = CLIENT_SIDE_ROOM_SIZES.size();
+        return Mth.clamp((pos.getX() - 8 + BagsData.ROOM_SPACING / 2) / BagsData.ROOM_SPACING + 1, 0, max);
+    }
+
+    public static boolean isWall(Level level, BlockPos pos) {
+        if (level.dimension().equals(DimBag.BAG_DIM)) {
+            int id = closestRoomId(pos);
+            if (id <= 0)
+                return false;
+            if (level instanceof ServerLevel)
+                return BagsData.runOnBag(id, b -> b.getRoom().isWall(pos), false);
+            else {
+                if (id >= CLIENT_SIDE_ROOM_SIZES.size())
+                    return false;
+                Pair<BlockPos, BlockPos> p = CLIENT_SIDE_ROOM_SIZES.get(id - 1);
+                return RoomData.isWall(pos, p.getFirst(), p.getSecond());
+            }
+        }
+        return false;
     }
 
     public DimBag() { super(MOD_ID, "Dimensional Bags", true, createTab(MOD_ID, MOD_ID, ()->BagItem.R_ITEM)); }

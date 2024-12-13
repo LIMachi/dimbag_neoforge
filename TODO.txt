@@ -7,3 +7,9 @@ Disable the keyboard virtualization of the parasite module and work using impuls
 Add energy costs on some operations
 Redo actuator (many functions do not work as intended)
 Fix auto selection of upgrade position when installed via bag
+
+
+world interaction module: pump fluids in/out, absorb/throw items (dispenser style), absorb/fill energy from nearby blocks
+compression module: increase the storage of all slot/tanks and batteries in the bag
+wall pusher: use durability scalling on the amount of blocks to push (might require multiple pusher in a single action)
+check if walls can be pushed/pulled by piston

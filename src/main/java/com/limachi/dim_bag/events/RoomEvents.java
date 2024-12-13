@@ -11,7 +11,6 @@ import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.phys.Vec3;
-import net.minecraftforge.event.entity.EntityEvent;
 import net.minecraftforge.event.entity.EntityMobGriefingEvent;
 import net.minecraftforge.event.entity.living.LivingDestroyBlockEvent;
 import net.minecraftforge.event.entity.living.LivingEvent;
@@ -60,19 +59,19 @@ public class RoomEvents {
 
     @SubscribeEvent
     public static void howTFDidYouPutAWitherOrDragonInYourBagAndThoughtItWasAGoodIdea(LivingDestroyBlockEvent event) {
-        if (BagsData.isWall(event.getEntity().level(), event.getPos()))
+        if (DimBag.isWall(event.getEntity().level(), event.getPos()))
             event.setCanceled(true);
     }
 
     @SubscribeEvent
     public static void wallCannotBeMined(PlayerEvent.BreakSpeed event) {
-        if (event.getEntity().level() instanceof ServerLevel level && event.getPosition().map(p->BagsData.isWall(level, p)).orElse(false))
+        if (event.getPosition().map(p->DimBag.isWall(event.getEntity().level(), p)).orElse(false))
             event.setCanceled(true);
     }
 
     @SubscribeEvent
     public static void wallCannotBeBroken(BlockEvent.BreakEvent event) {
-        if (!event.getPlayer().isCreative() && BagsData.isWall((Level)event.getLevel(), event.getPos()))
+        if (!event.getPlayer().isCreative() && DimBag.isWall((Level)event.getLevel(), event.getPos()))
             event.setCanceled(true);
     }
 
@@ -80,7 +79,7 @@ public class RoomEvents {
     public static void wallCannotBeExploded(ExplosionEvent.Detonate event) {
         if (event.getLevel().dimension() == DimBag.BAG_DIM) {
             Vec3 pos = event.getExplosion().getPosition();
-            BagsData.runOnBag(event.getLevel(), new BlockPos((int)pos.x, (int)pos.y, (int)pos.z), bag->event.getAffectedBlocks().removeIf(bag::isWall));
+            BagsData.runOnBag(event.getLevel(), new BlockPos((int)pos.x, (int)pos.y, (int)pos.z), bag->event.getAffectedBlocks().removeIf(p->bag.getRoom().isWall(p)));
         }
     }
 
@@ -88,10 +87,10 @@ public class RoomEvents {
     public static void entitiesArentAllowedToTravelInBagDimensionOutsideRooms(LivingEvent.LivingTickEvent event) {
         Entity entity = event.getEntity();
         Level level = entity.level();
-        if (entity instanceof Player player && player.isCreative()) return;
+        if (entity instanceof Player player && (player.isCreative() || player.isSpectator())) return;
         if (!level.isClientSide && level.dimension().equals(DimBag.BAG_DIM)) {
-            BagsData.runOnBag(BagsData.closestRoomId(entity.blockPosition()), bag->{
-                if (!bag.isInRoom(entity.blockPosition()))
+            BagsData.runOnBag(DimBag.closestRoomId(entity.blockPosition()), bag->{
+                if (!bag.getRoom().isInside(entity.blockPosition()))
                     bag.enter(entity, false);
             });
         }

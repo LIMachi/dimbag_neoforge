@@ -3,7 +3,7 @@ package com.limachi.dim_bag.commands;
 import com.limachi.dim_bag.entities.BagEntity;
 import com.limachi.dim_bag.items.BagItem;
 import com.limachi.dim_bag.save_datas.BagsData;
-import com.limachi.lim_lib.PlayerUtils;
+import com.limachi.lim_lib.utils.PlayerUtils;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.core.BlockPos;

@@ -4,9 +4,11 @@ import com.limachi.dim_bag.DimBag;
 import com.limachi.dim_bag.capabilities.entities.BagMode;
 import com.limachi.dim_bag.entities.BagEntity;
 import com.limachi.dim_bag.entities.BagItemEntity;
+import com.limachi.dim_bag.events.EntityEvents;
 import com.limachi.dim_bag.items.bag_modes.BaseMode;
 import com.limachi.dim_bag.items.bag_modes.ModesRegistry;
 import com.limachi.dim_bag.items.bag_modes.SettingsMode;
+import com.limachi.dim_bag.other.BagVisibilities;
 import com.limachi.dim_bag.save_datas.BagsData;
 import com.limachi.dim_bag.save_datas.bag_data.BagInstance;
 import com.limachi.lim_lib.Sides;
@@ -19,6 +21,7 @@ import com.limachi.lim_lib.registries.ClientRegistries;
 import com.limachi.lim_lib.registries.StaticInitClient;
 import com.limachi.lim_lib.registries.annotations.RegisterItem;
 import com.limachi.lim_lib.scrollSystem.IScrollItem;
+import com.limachi.lim_lib.utils.PlayerUtils;
 import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
@@ -38,7 +41,6 @@ import net.minecraft.world.inventory.Slot;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.context.UseOnContext;
-import net.minecraft.world.item.enchantment.EnchantmentHelper;
 import net.minecraft.world.level.ClipContext;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.phys.AABB;
@@ -89,31 +91,34 @@ public class BagItem extends Item implements IScrollItem {
     public boolean overrideStackedOnOther(@Nonnull ItemStack bag, @Nonnull Slot slot, @Nonnull ClickAction action, @Nonnull Player player) {
         if (bag.getCount() != 1 || action != ClickAction.SECONDARY) return false;
         ItemStack itemstack = slot.getItem();
-        BagsData.runOnBag(bag, b->
-            b.slotsHandle().ifPresent(d->{
+        return BagsData.runOnBag(bag, b->
+            b.slotsHandle().map(d->{
                 if (itemstack.isEmpty())
                     for (int i = 0; i < d.getSlots(); ++i) {
                         ItemStack found = d.getStackInSlot(i);
                         if (!found.isEmpty()) {
                             d.setStackInSlot(i, slot.safeInsert(found));
                             player.playSound(SoundEvents.BUNDLE_REMOVE_ONE, 0.8F, 0.8F + player.level().getRandom().nextFloat() * 0.4F);
+                            return true;
                         }
                     }
                 else {
                     ItemStack original = itemstack.copy();
                     slot.set(ItemHandlerHelper.insertItem(d, itemstack, false));
-                    if (!original.equals(slot.getItem()))
+                    if (!original.equals(slot.getItem())) {
                         player.playSound(SoundEvents.BUNDLE_INSERT, 0.8F, 0.8F + player.level().getRandom().nextFloat() * 0.4F);
+                        return true;
+                    }
                 }
-            }));
-        return true;
+                return false;
+            }).orElse(false), false);
     }
 
     @Override
     public boolean overrideOtherStackedOnMe(ItemStack bag, ItemStack itemstack, Slot slot, ClickAction action, Player player, SlotAccess sa) {
         if (bag.getCount() != 1 || action != ClickAction.SECONDARY) return false;
-        BagsData.runOnBag(bag, b->
-            b.slotsHandle().ifPresent(d->{
+        return BagsData.runOnBag(bag, b->
+            b.slotsHandle().map(d->{
                 if (itemstack.isEmpty()) {
                     for (int i = 0; i < d.getSlots(); ++i) {
                         ItemStack found = d.getStackInSlot(i);
@@ -121,16 +126,19 @@ public class BagItem extends Item implements IScrollItem {
                             sa.set(found.copy());
                             d.setStackInSlot(i, ItemStack.EMPTY);
                             player.playSound(SoundEvents.BUNDLE_REMOVE_ONE, 0.8F, 0.8F + player.level().getRandom().nextFloat() * 0.4F);
+                            return true;
                         }
                     }
                 } else {
                     ItemStack original = itemstack.copy();
                     sa.set(ItemHandlerHelper.insertItem(d, itemstack, false));
-                    if (!original.equals(slot.getItem()))
+                    if (!original.equals(slot.getItem())) {
                         player.playSound(SoundEvents.BUNDLE_INSERT, 0.8F, 0.8F + player.level().getRandom().nextFloat() * 0.4F);
+                        return true;
+                    }
                 }
-            }));
-        return true;
+                return false;
+            }).orElse(false), false);
     }
 
     public static class CapabilityProvider implements ICapabilityProvider {
@@ -219,6 +227,8 @@ public class BagItem extends Item implements IScrollItem {
                 player.setItemSlot(EquipmentSlot.CHEST, bag);
                 return player.getItemBySlot(EquipmentSlot.CHEST).getItem() instanceof BagItem;
             }
+            PlayerUtils.giveOrDrop(player, bag);
+            return true;
         }
         int id = getBagId(bag);
         if (!entity.isVehicle() && id > 0 && /**unstable for now!*/!(entity instanceof Player)) {
@@ -332,8 +342,8 @@ public class BagItem extends Item implements IScrollItem {
     }
 
     protected void commonBagTick(BagInstance bag, CompoundTag data, ItemStack stack, Level level, Entity entity, int slot, boolean selected) {
-        if (entity instanceof Player player)
-            player.getCapability(BagMode.CAPABILITY).ifPresent(bagMode->{
+        if (entity instanceof ServerPlayer player) {
+            player.getCapability(BagMode.CAPABILITY).ifPresent(bagMode -> {
                 long enabled = bag.enabledModesMask();
                 if (data.getLong(BagInstance.MODES_STORAGE) != enabled) {
                     data.putLong(BagInstance.MODES_STORAGE, enabled);
@@ -342,6 +352,8 @@ public class BagItem extends Item implements IScrollItem {
                 }
                 ModesRegistry.getMode(bagMode.getMode(bag.bagId())).inventoryTick(stack, level, entity, slot, selected);
             });
+            BagVisibilities.bagTick(player);
+        }
         String name = Component.Serializer.toJson(getName(stack));
         if (!stack.getTag().getString(BAG_NAME_OVERRIDE).equals(name))
             stack.getTag().putString(BAG_NAME_OVERRIDE, name);

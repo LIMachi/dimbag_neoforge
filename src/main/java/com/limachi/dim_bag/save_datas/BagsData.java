@@ -8,12 +8,17 @@ import com.limachi.dim_bag.save_datas.bag_data.BagInstance;
 import com.limachi.lim_lib.Configs;
 import com.limachi.lim_lib.Sides;
 import com.limachi.lim_lib.World;
+import com.limachi.lim_lib.network.IRecordMsg;
+import com.limachi.lim_lib.network.NetworkManager;
+import com.limachi.lim_lib.network.RegisterMsg;
+import com.mojang.datafixers.util.Pair;
 import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.ListTag;
 import net.minecraft.nbt.Tag;
 import net.minecraft.server.level.ServerLevel;
-import net.minecraft.util.Mth;
+import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.saveddata.SavedData;
@@ -24,7 +29,6 @@ import net.minecraftforge.fml.common.Mod;
 import javax.annotation.Nonnull;
 import java.util.ArrayList;
 import java.util.LinkedList;
-import java.util.Optional;
 import java.util.function.Consumer;
 import java.util.function.Function;
 
@@ -46,10 +50,42 @@ public class BagsData extends SavedData {
 
     private static BagsData INSTANCE = null;
 
-    private static BagsData getInstance() {
+    @RegisterMsg
+    public record ClientSideRoomSizeUpdateBatch(BlockPos[] mins, BlockPos[] maxs) implements IRecordMsg {
+        @Override
+        public void clientWork(Player player) {
+            for (int i = 0; i < mins.length; ++i) {
+                if (i < DimBag.CLIENT_SIDE_ROOM_SIZES.size())
+                    DimBag.CLIENT_SIDE_ROOM_SIZES.set(i, new Pair<>(mins[i], maxs[i]));
+                else
+                    DimBag.CLIENT_SIDE_ROOM_SIZES.add(new Pair<>(mins[i], maxs[i]));
+            }
+        }
+    }
+
+    public static void sendRoomSizes(ServerPlayer player) {
+        if (INSTANCE == null || INSTANCE.instances.isEmpty())
+            return;
+        BlockPos[] mins = new BlockPos[INSTANCE.instances.size()];
+        BlockPos[] maxs = new BlockPos[INSTANCE.instances.size()];
+        for (int i = 0; i < INSTANCE.instances.size(); ++i) {
+            Pair<BlockPos, BlockPos> p = INSTANCE.instances.get(i).getRoom().getWalls();
+            mins[i] = p.getFirst();
+            maxs[i] = p.getSecond();
+        }
+        NetworkManager.toClient(player, new ClientSideRoomSizeUpdateBatch(mins, maxs));
+    }
+
+    public static BagsData getInstance() {
         if (!Sides.isLogicalClient())
             return INSTANCE;
         return null;
+    }
+
+    public static int max() {
+        if (INSTANCE == null)
+            return 0;
+        return INSTANCE.instances.size();
     }
     private static LinkedList<Runnable> INVALIDATORS = new LinkedList<>();
 
@@ -57,34 +93,17 @@ public class BagsData extends SavedData {
     private final ArrayList<BagInstance> instances = new ArrayList<>();
     public final ServerLevel level;
 
-    public static int closestRoomId(BlockPos pos) {
-        if (getInstance() == null)
-            return 0;
-        return Mth.clamp((pos.getX() - 8 + ROOM_SPACING / 2) / ROOM_SPACING + 1, 0, INSTANCE.instances.size());
-    }
-
     private static BagInstance roomAt(Level level, BlockPos pos) {
         if (level instanceof ServerLevel && level.dimension().equals(DimBag.BAG_DIM)) {
-            int id = closestRoomId(pos);
+            int id = DimBag.closestRoomId(pos);
             if (id != 0) {
                 BagInstance bag = INSTANCE.instances.get(id - 1);
-                if (bag.isInRoom(pos))
+                if (bag.getRoom().isInside(pos))
                     return bag;
             }
         }
         return null;
     }
-
-    public static boolean isWall(Level level, BlockPos pos) {
-        if (level instanceof ServerLevel && level.dimension().equals(DimBag.BAG_DIM)) {
-            int id = closestRoomId(pos);
-            if (id != 0)
-                return INSTANCE.instances.get(id - 1).isWall(pos);
-        }
-        return false;
-    }
-
-    public static BlockPos roomCenter(int id) { return new BlockPos(8 + (id - 1) * ROOM_SPACING, 128, 8); }
 
     /**
      * <pre>

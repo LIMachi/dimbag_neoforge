@@ -5,6 +5,7 @@ import com.limachi.dim_bag.save_datas.BagsData;
 import com.limachi.dim_bag.save_datas.bag_data.SlotData;
 import com.limachi.lim_lib.menus.IAcceptUpStreamNBT;
 import com.limachi.lim_lib.registries.annotations.RegisterMenu;
+import com.limachi.lim_lib.utils.Menus;
 import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.FriendlyByteBuf;
@@ -33,87 +34,25 @@ public class SlotMenu extends AbstractContainerMenu implements IAcceptUpStreamNB
             NetworkHooks.openScreen((ServerPlayer) player, new SimpleMenuProvider((id, inv, p)->new SlotMenu(id, inv, bag, slot), BagsData.runOnBag(bag, b->b.getSlotLabel(slot), SlotData.DEFAULT_SLOT_LABEL)));
     }
 
-    public static class SlotsSectionManager {
-        private record Entry(int min, int max, boolean direction, boolean order, int jump){}
-
-        private final ArrayList<Entry> entries = new ArrayList<>();
-        private int total_slots = 0;
-
-        public SlotsSectionManager() {}
-
-        public void newSection(int slots, boolean quickMoveAbove) { newSection(slots, quickMoveAbove, !quickMoveAbove, 0); }
-        public void newSection(int slots, boolean quickMoveAbove, boolean fromLastSlot) { newSection(slots, quickMoveAbove, fromLastSlot, 0); }
-        public void newSection(int slots, boolean quickMoveAbove, int jumpSections) { newSection(slots, quickMoveAbove, !quickMoveAbove, jumpSections); }
-        public void newSection(int slots, boolean quickMoveAbove, boolean fromLastSlot, int jumpSections) {
-            entries.add(new Entry(total_slots, slots, quickMoveAbove, fromLastSlot, jumpSections));
-            total_slots = slots;
-        }
-
-        @FunctionalInterface
-        public interface MoveItemStackTo {
-            boolean apply(ItemStack stack, int min, int max, boolean up);
-        }
-
-        public ItemStack quickMoveStack(AbstractContainerMenu menu, int slot, MoveItemStackTo mover) {
-            ItemStack out = ItemStack.EMPTY;
-            Slot s = menu.slots.get(slot);
-            if (s.hasItem()) {
-                ItemStack stack = s.getItem();
-                out = stack.copy();
-                for (int i = 0; i < entries.size(); ++i) {
-                    Entry entry = entries.get(i);
-                    if (slot >= entry.min && slot < entry.max) {
-                        int i2 = i;
-                        do {
-                            int delta = 1 + (i2 == i ? entry.jump : 0);
-                            if (entry.direction) {
-                                i2 -= delta;
-                                while (i2 < 0)
-                                    i2 += entries.size();
-                            } else {
-                                i2 += delta;
-                                while (i2 >= entries.size())
-                                    i2 -= entries.size();
-                            }
-                            Entry target = entries.get(i2);
-                            if (!mover.apply(stack, target.min, target.max, entry.order))
-                                return ItemStack.EMPTY;
-                        } while (i2 != i);
-                        break;
-                    }
-                }
-
-                if (stack.isEmpty())
-                    s.setByPlayer(ItemStack.EMPTY);
-                else
-                    s.setChanged();
-            }
-
-            return out;
-        }
-    }
-
-    private final SlotsSectionManager sections = new SlotsSectionManager();
+    private final ArrayList<Menus.SlotSection> sections = new ArrayList<>();
 
     public SlotMenu(int id, Inventory playerInventory, int bag, BlockPos slot) {
         super(R_TYPE.get(), id);
 
-        addSlot(bag > 0 && slot != null ? new BagSlot(bag, slot, 79, 36, s->true) : new BagSlot(79, 36, s->true));
+        addSlot(bag > 0 && slot != null ? new BagSlot(bag, playerInventory.player, slot, 79, 36, s->true) : new BagSlot(79, 36, s->true));
 
-        sections.newSection(slots.size(), false, false);
+        Menus.newSection(sections, slots, false, false);
 
         for(int l = 0; l < 3; ++l) {
             for(int j1 = 0; j1 < 9; ++j1)
                 this.addSlot(new Slot(playerInventory, j1 + l * 9 + 9, 8 + j1 * 18, 85 + l * 18));
         }
 
-        sections.newSection(slots.size(), true);
-
         for(int i1 = 0; i1 < 9; ++i1) {
             this.addSlot(new Slot(playerInventory, i1, 8 + i1 * 18, 143));
         }
 
-        sections.newSection(slots.size(), false);
+        Menus.newSection(sections, slots, false);
     }
 
     public SlotMenu(int id, Inventory playerInventory, FriendlyByteBuf buff) {
@@ -123,7 +62,7 @@ public class SlotMenu extends AbstractContainerMenu implements IAcceptUpStreamNB
     @Override
     @Nonnull
     public ItemStack quickMoveStack(@Nonnull Player player, int index) {
-        return sections.quickMoveStack(this, index, this::moveItemStackTo);
+        return Menus.quickMoveStack(this, player, index, sections);
     }
 
     @Override
