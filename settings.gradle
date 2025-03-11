@@ -7,7 +7,7 @@ pluginManagement {
     }
 }
 
-rootProject.name = 'arss'
+rootProject.name = 'dim_bag'
 
 include 'common'
 include 'fabric'

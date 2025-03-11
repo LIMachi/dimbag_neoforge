@@ -7,6 +7,12 @@ architectury {
     neoForge()
 }
 
+processResources {
+    from(rootProject.file("common/src/main/resources")) {
+        include("dim_bag.accesswidener")
+    }
+}
+
 configurations {
     common {
         canBeResolved = true
@@ -45,7 +51,13 @@ processResources {
     inputs.property 'version', project.version
 
     filesMatching('META-INF/neoforge.mods.toml') {
-        expand version: project.version
+        expand  version: project.version,
+                archives_name: project.archives_name,
+                readable_name: project.readable_name,
+                description: project.description,
+                author: project.author,
+                license: project.license,
+                minecraft_version: project.minecraft_version
     }
 }
 
@@ -56,4 +68,9 @@ shadowJar {
 
 remapJar {
     input.set shadowJar.archiveFile
+    atAccessWideners.add("arss.accesswidener")
+}
+
+loom {
+    accessWidenerPath = project(":common").loom.accessWidenerPath
 }

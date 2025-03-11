@@ -1,0 +1,13 @@
+accessWidener v2 named
+
+#void, bool, byte, char, short, int, long, float, double, object
+#V     Z     B     C     S      I    J     F      D       L<path>;
+
+#class: <access> class <classDesc> (access: accessible extendable transitive-*)
+#field: <access> field <classDesc> <fieldName> <typeDesc> (access: accessible mutable transitive-*)
+#method: <access> method <classDesc> <methodName> <funcDesc> (access: accessible extendable transitive-*)
+
+#accessible: class/field -> public, method: public +final (if private)
+#extendable: class -> public -final, method: protected -final (extendable method = containing class extendable)
+#mutable: -final (for accessible + mutable, need 2 entries)
+#transitive-*: also apply to dependents/add-ons
