@@ -7,7 +7,7 @@ import java.lang.annotation.Target;
 
 /**
  * <pre>
- * Register this class item and set the annotated field to be a {@code RegistryObject<? extends Item>}.
+ * Register this class item and set the annotated field to be a {@code RegistrySupplier<? extends Item>}.
  * Leave name to default if you want it to be generated from the class name
  * (will transform camel case names to snake case).
  * </pre>

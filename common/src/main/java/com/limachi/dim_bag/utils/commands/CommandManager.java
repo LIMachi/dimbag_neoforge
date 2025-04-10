@@ -45,9 +45,9 @@ import java.util.Optional;
 import java.util.function.BiFunction;
 
 public class CommandManager {
-    public static LiteralArgumentBuilder<CommandSourceStack> cmd(String cmd, Command<CommandSourceStack> run, HashMap<String, ArgumentType<?>> mappedTypes) {
+    public static LiteralArgumentBuilder<CommandSourceStack> cmd(String cmd, Command<CommandSourceStack> run, HashMap<String, ArgumentType<?>> mappedTypes, int permLevel) {
         String[] c = cmd.startsWith("/") ? cmd.substring(1).split(" ") : cmd.split(" ");
-        LiteralArgumentBuilder<CommandSourceStack> root = Commands.literal(c[0]);
+        LiteralArgumentBuilder<CommandSourceStack> root = Commands.literal(c[0]).requires(s->s.hasPermission(permLevel));
         ArrayList<ArgumentBuilder<CommandSourceStack, ?>> rev = new ArrayList<>(c.length - 1);
         for (int i = 1; i < c.length; ++i) {
             if (c[i].startsWith("<") && c[i].endsWith(">")) {
@@ -63,9 +63,9 @@ public class CommandManager {
         return root;
     }
 
-    public static LiteralArgumentBuilder<CommandSourceStack> cmd(String cmd, Command<CommandSourceStack> run, ArgumentType<?> ... types) {
+    public static LiteralArgumentBuilder<CommandSourceStack> cmd(String cmd, Command<CommandSourceStack> run, int permLevel, ArgumentType<?> ... types) {
         String[] c = cmd.startsWith("/") ? cmd.substring(1).split(" ") : cmd.split(" ");
-        LiteralArgumentBuilder<CommandSourceStack> root = Commands.literal(c[0]);
+        LiteralArgumentBuilder<CommandSourceStack> root = Commands.literal(c[0]).requires(s->s.hasPermission(permLevel));
         int arg = 0;
         ArrayList<ArgumentBuilder<CommandSourceStack, ?>> rev = new ArrayList<>(c.length - 1);
         for (int i = 1; i < c.length; ++i) {
@@ -96,6 +96,7 @@ public class CommandManager {
     private static final HashMap<Class<?>, CommandGetter<?>> GETTER_OVERRIDE = Util.make(new HashMap<>(), m->{
         m.put(BlockPos.class, BlockPosArgument::getBlockPos);
         m.put(Entity.class, EntityArgument::getEntity);
+        m.put(Entity[].class, (ctx, s)->EntityArgument.getOptionalEntities(ctx, s).toArray(new Entity[0]));
         m.put(ServerPlayer.class, EntityArgument::getPlayer);
         m.put(Player.class, EntityArgument::getPlayer);
         m.put(BlockInput.class, BlockStateArgument::getBlock);
@@ -162,6 +163,7 @@ public class CommandManager {
         m.put(Double.class, doubleArg);
         m.put(BlockPos.class, (b, a)->BlockPosArgument.blockPos());
         m.put(Entity.class, (b, a)->EntityArgument.entity());
+        m.put(Entity[].class, (b, a)->EntityArgument.entities());
         m.put(ServerPlayer.class, (b, a)->EntityArgument.player());
         m.put(Player.class, (b, a)->EntityArgument.player());
         m.put(BlockPredicateArgument.Result.class, (b, a)->BlockPredicateArgument.blockPredicate(b));
@@ -175,19 +177,29 @@ public class CommandManager {
         m.put(ItemStack.class, (b, a)->ItemArgument.item(b));
     });
 
-    public static void registerArg(Class<?> forClass, BiFunction<CommandBuildContext, CmdArg, ArgumentType<?>> argProvider) {
-        ARG_TYPES.put(forClass, argProvider);
-    }
+    private static final HashMap<Class<?>, Object> FALL_BACKS = Util.make(new HashMap<>(), m->{
+        m.put(boolean.class, false);
+        m.put(int.class, 0);
+        m.put(long.class, 0L);
+        m.put(float.class, 0f);
+        m.put(double.class, 0.);
+        m.put(Entity[].class, new Entity[0]);
+    });
 
-    public static void registerGetter(Class<?> forClass, CommandGetter<?> getter) {
-        GETTER_OVERRIDE.put(forClass, getter);
+    public static <T> void registerArg(Class<T> forClass, BiFunction<CommandBuildContext, CmdArg, ArgumentType<?>> argProvider, CommandGetter<T> getter, T fallBack) {
+        if (argProvider != null)
+            ARG_TYPES.put(forClass, argProvider);
+        if (getter != null)
+            GETTER_OVERRIDE.put(forClass, getter);
+        if (fallBack != null)
+            FALL_BACKS.put(forClass, fallBack);
     }
 
     private static <T> Optional<LiteralArgumentBuilder<CommandSourceStack>> cmdAnnotation(CommandBuildContext builder, MethodAccess<?, ?> m, RegisterCommand a) {
         Parameter[] parameters = m.parameters();
         if (parameters.length == 0) {
             //error: missing ctx as first arg
-            ModBase.logger.error("missing first arg (ctx): " + m.name() + " # " + a.value());
+            ModBase.logger.error("missing first arg (ctx): " + m.name() + (a.value().isBlank() ? "" : " # " + a.value()));
             return Optional.empty();
         }
         ArgumentType<?>[] at = new ArgumentType[parameters.length - 1];
@@ -195,15 +207,14 @@ public class CommandManager {
         HashMap<String, ArgumentType<?>> mapping = new HashMap<>();
         if (!m.returnType().isAssignableFrom(int.class)) {
             //error: annotation is on a method that does not return an int
-            ModBase.logger.error("should return int: " + m.name() + " # " + a.value());
+            ModBase.logger.error("should return int: " + m.name() + (a.value().isBlank() ? "" : " # " + a.value()));
             return Optional.empty();
         }
-        String command = a.value();
         for (int p = 1; p < parameters.length; ++p) {
             boolean found = false;
             for (Annotation pa : parameters[p].getAnnotations()) {
                 if (pa instanceof CmdArg arg) {
-                    labels[p - 1] = arg.value();
+                    labels[p - 1] = arg.value().isBlank() ? parameters[p].getName() : arg.value();
                     at[p - 1] = ARG_TYPES.get(parameters[p].getType()).apply(builder, arg);
                     mapping.put(labels[p - 1], at[p - 1]);
                     found = true;
@@ -216,26 +227,37 @@ public class CommandManager {
                 return Optional.empty();
             }
         }
+        String command = a.value();
+        if (command.isBlank()) {
+            StringBuilder t = new StringBuilder(ModBase.registries.mod_id);
+            t.append(' ').append(m.name());
+            for (String label : labels)
+                t.append(" <").append(label).append('>');
+            command = t.toString();
+        }
         return Optional.of(cmd(command, ctx -> {
             Object[] args = new Object[parameters.length];
             args[0] = ctx;
-            for (int i = 0; i < at.length; ++i)
+            for (int i = 0; i < at.length; ++i) {
+                Class<?> clazz = parameters[i + 1].getType();
                 try {
-                    Class<?> clazz = parameters[i + 1].getType();
                     if (GETTER_OVERRIDE.containsKey(clazz))
                         args[i + 1] = GETTER_OVERRIDE.get(clazz).apply(ctx, labels[i]);
                     else
                         args[i + 1] = ctx.getArgument(labels[i], clazz);
-                } catch (Exception ignored) {
-                    ModBase.logger.warn("command arg exception: " + ignored);
-                } //probably an optional arg
+                } catch (IllegalArgumentException option) {
+                    args[i + 1] = FALL_BACKS.get(clazz);
+                } catch (Exception unexpected) {
+                    ModBase.logger.warn("command arg exception: " + unexpected);
+                }
+            }
             try {
                 return (int) m.get(null, false, args);
             } catch (Exception e) {
                 ModBase.logger.warn("command exception: " + e);
                 return 0;
             }
-        }, mapping));
+        }, mapping, Math.clamp(a.permissionLevel(), 0, 4)));
     }
 
     public static void register() {

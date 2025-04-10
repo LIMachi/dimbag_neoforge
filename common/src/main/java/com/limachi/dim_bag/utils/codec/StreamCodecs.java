@@ -25,6 +25,7 @@ import net.minecraft.world.level.Level;
 import net.minecraft.world.phys.Vec3;
 
 import java.util.HashMap;
+import java.util.UUID;
 
 public class StreamCodecs {
     public static final StreamCodec<RegistryFriendlyByteBuf, Boolean> BOOL = StreamCodec.of(RegistryFriendlyByteBuf::writeBoolean, RegistryFriendlyByteBuf::readBoolean);
@@ -36,6 +37,7 @@ public class StreamCodecs {
     public static final StreamCodec<RegistryFriendlyByteBuf, Float> FLOAT = StreamCodec.of(RegistryFriendlyByteBuf::writeFloat, RegistryFriendlyByteBuf::readFloat);
     public static final StreamCodec<RegistryFriendlyByteBuf, Double> DOUBLE = StreamCodec.of(RegistryFriendlyByteBuf::writeDouble, RegistryFriendlyByteBuf::readDouble);
     public static final StreamCodec<RegistryFriendlyByteBuf, String> STR = StreamCodec.of(RegistryFriendlyByteBuf::writeUtf, RegistryFriendlyByteBuf::readUtf);
+    public static final StreamCodec<RegistryFriendlyByteBuf, UUID> UUID = StreamCodec.of((b, u)->b.writeUUID(u), b->b.readUUID());
     public static final StreamCodec<RegistryFriendlyByteBuf, BlockPos> POS = StreamCodec.of((b, c)->b.writeLong(c.asLong()), b->BlockPos.of(b.readLong()));
 
     public static final StreamCodec<RegistryFriendlyByteBuf, Boolean[]> BOOL_ARRAY = StreamCodec.of((b, l)->b.writeByteArray(compactBoolArray(l)), b->fromCompactBoolArray(b.readByteArray()));
@@ -203,6 +205,17 @@ public class StreamCodecs {
         return out;
     });
 
+    public static final StreamCodec<RegistryFriendlyByteBuf, UUID[]> UUID_ARRAY = StreamCodec.of((b, u)->{
+        b.writeVarInt(u.length);
+        for (var p : u)
+            b.writeUUID(p);
+    }, b->{
+        java.util.UUID[] out = new UUID[b.readVarInt()];
+        for (int i = 0; i < out.length; ++i)
+            out[i] = b.readUUID();
+        return out;
+    });
+
     public static final StreamCodec<RegistryFriendlyByteBuf, BlockPos[]> POS_ARRAY = StreamCodec.of((b, l)->{
         b.writeVarInt(l.length);
         for (var p : l)
@@ -328,6 +341,9 @@ public class StreamCodecs {
 
         CODECS.put(String.class, STR);
         CODECS.put(String[].class, STR_ARRAY);
+
+        CODECS.put(java.util.UUID.class, UUID);
+        CODECS.put(java.util.UUID[].class, UUID_ARRAY);
 
         CODECS.put(BlockPos.class, POS);
         CODECS.put(BlockPos[].class, POS_ARRAY);

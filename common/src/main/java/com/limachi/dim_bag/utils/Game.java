@@ -251,4 +251,13 @@ public class Game {
             return server.getLevel(ResourceKey.create(Registries.DIMENSION, location));
         }, ()->null);
     }
+
+    public static Level getLevel(ResourceKey<Level> level) {
+        return getLogical(()->()->ClientUtils.getLevel(level.location()), ()->()->{
+            var server = GameInstance.getServer();
+            if (server == null)
+                return null;
+            return server.getLevel(level);
+        }, ()->null);
+    }
 }

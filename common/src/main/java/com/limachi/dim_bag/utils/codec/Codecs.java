@@ -43,6 +43,22 @@ public class Codecs {
     public static final Codec<Float> FLOAT = Codec.FLOAT;
     public static final Codec<Double> DOUBLE = Codec.DOUBLE;
     public static final Codec<String> STR = Codec.STRING;
+    public static final Codec<UUID> UUID = new PrimitiveCodec<>() {
+        @Override
+        public <T> DataResult<java.util.UUID> read(DynamicOps<T> ops, T input) {
+            return ops.getStream(input).flatMap(s->{
+                List<T> list = s.toList();
+                if (list.size() == 2 && list.stream().allMatch(e->ops.getNumberValue(e).isSuccess()))
+                    return DataResult.success(new java.util.UUID(ops.getNumberValue(list.get(0)).result().get().longValue(), ops.getNumberValue(list.get(1)).result().get().longValue()));
+                return DataResult.error(()-> "Some elements did not match the expected type: " + input);
+            });
+        }
+
+        @Override
+        public <T> T write(DynamicOps<T> ops, java.util.UUID value) {
+            return ops.createList(Arrays.stream(new Long[]{value.getMostSignificantBits(), value.getLeastSignificantBits()}).map(ops::createLong));
+        }
+    };
     public static final Codec<BlockPos> POS = new PrimitiveCodec<BlockPos>() {
         @Override
         public <T> DataResult<BlockPos> read(DynamicOps<T> ops, T input) { return ops.getNumberValue(input).map(n->BlockPos.of(n.longValue())); }
@@ -413,6 +429,26 @@ public class Codecs {
             return ops.createList(Arrays.stream(value).map(ops::createString));
         }
     };
+    public static final Codec<UUID[]> UUID_ARRAY = new PrimitiveCodec<>() {
+        @Override
+        public <T> DataResult<java.util.UUID[]> read(DynamicOps<T> ops, T input) {
+            return ops.getStream(input).flatMap(s->{
+                List<T> list = s.toList();
+                if ((list.size() % 2) == 0 && list.stream().allMatch(e->ops.getNumberValue(e).isSuccess())) {
+                    var out = new java.util.UUID[list.size() / 2];
+                    for (int i = 0; i < out.length; ++i)
+                        out[i] = new UUID(ops.getNumberValue(list.get(i * 2)).result().get().longValue(), ops.getNumberValue(list.get(i * 2 + 1)).result().get().longValue());
+                    return DataResult.success(out);
+                }
+                return DataResult.error(()-> "Some elements did not match the expected type: " + input);
+            });
+        }
+
+        @Override
+        public <T> T write(DynamicOps<T> ops, java.util.UUID[] value) {
+            return ops.createList(Arrays.stream(value).flatMap(v->Arrays.stream(new Long[]{v.getMostSignificantBits(), v.getLeastSignificantBits()})).map(ops::createLong));
+        }
+    };
     public static final Codec<BlockPos[]> POS_ARRAY = new PrimitiveCodec<>() {
         @Override
         public <T> DataResult<BlockPos[]> read(DynamicOps<T> ops, T input) {
@@ -554,6 +590,9 @@ public class Codecs {
 
         CODECS.put(String.class, STR);
         CODECS.put(String[].class, STR_ARRAY);
+
+        CODECS.put(java.util.UUID.class, UUID);
+        CODECS.put(java.util.UUID[].class, UUID_ARRAY);
 
         CODECS.put(BlockPos.class, POS);
         CODECS.put(BlockPos[].class, POS_ARRAY);
