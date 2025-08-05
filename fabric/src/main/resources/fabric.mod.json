@@ -16,10 +16,10 @@
   "environment": "*",
   "entrypoints": {
     "main": [
-      "com.limachi.${archives_name}.fabric.MainFabric"
+      "${maven_group}.fabric.MainFabric"
     ],
     "client": [
-      "com.limachi.${archives_name}.fabric.client.MainFabricClient"
+      "${maven_group}.fabric.MainFabric"
     ]
   },
   "mixins": [
@@ -31,10 +31,11 @@
     "minecraft": "~${minecraft_version}",
     "java": ">=21",
     "architectury": ">=13.0.2",
-    "fabric-api": "*"
+    "fabric-api": "*",
+    "lim_lib": ">=1.0.0"
   },
   "suggests": {
     "another-mod": "*"
   },
-  "__accessWidener": "arss.accesswidener"
+  "__accessWidener": "${archives_name}.accesswidener"
 }

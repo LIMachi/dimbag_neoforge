@@ -7,7 +7,7 @@ pluginManagement {
     }
 }
 
-rootProject.name = 'dim_bag'
+rootProject.name = archives_name
 
 include 'common'
 include 'fabric'

@@ -1,14 +1,12 @@
 package com.limachi.dim_bag.fabric;
 
-import com.limachi.dim_bag.fabric.utils.CheckEnvironmentVisitor;
-import com.limachi.dim_bag.utils.ModBase;
-import com.limachi.dim_bag.utils.reflect.AnnotationExtractor;
+import com.limachi.lim_lib.fabric.FabricEntryPoint;
+import com.limachi.lim_lib.fabric.annotations.FabricMod;
 
-import net.fabricmc.api.ModInitializer;
-
-public final class MainFabric implements ModInitializer {
+@FabricMod("dim_bag")
+public final class MainFabric extends FabricEntryPoint {
     @Override
-    public void onInitialize() {
-        ModBase.init(new AnnotationExtractor(ModBase.class, CheckEnvironmentVisitor::skipInvalidEnv));
+    protected String commonRootPackage() {
+        return "com.limachi.dim_bag";
     }
 }

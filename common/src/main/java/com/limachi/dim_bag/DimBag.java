@@ -1,32 +1,32 @@
 package com.limachi.dim_bag;
 
-import com.limachi.dim_bag.utils.ModBase;
-import com.limachi.dim_bag.utils.annotations.Config;
-import com.limachi.dim_bag.utils.annotations.Mod;
-import com.limachi.dim_bag.utils.annotations.RegisterTab;
+import com.limachi.lim_lib.InstancedMod;
+import com.limachi.lim_lib.common.annotations.*;
+import com.limachi.lim_lib.common.dataStorage.LevelDataField;
 
-import com.mojang.datafixers.util.Pair;
+import com.limachi.lim_lib.common.utils.Game;
+import com.mojang.brigadier.context.CommandContext;
+
+import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.resources.ResourceLocation;
-import net.minecraft.server.level.ServerLevel;
 import net.minecraft.util.Mth;
 import net.minecraft.world.item.CreativeModeTab;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.level.Level;
 
-import java.util.ArrayList;
+import java.util.function.*;
 
-@Mod("dim_bag")
-public final class DimBag extends ModBase {
+public final class DimBag {
+    @ModInstance
+    public static InstancedMod MOD;
 
-    public static final ArrayList<Pair<BlockPos, BlockPos>> CLIENT_SIDE_ROOM_SIZES = new ArrayList<>();
-
-    @Config(path = "rooms", min = "512", cmt = "Blocks between each room centers. CHANGING THIS WILL CORRUPT EXISTING WORLDS!")
-    public static int ROOM_SPACING = 1024;
+    @Config(path = "rooms", min = "1024", cmt = "Blocks between each room centers. CHANGING THIS WILL CORRUPT EXISTING WORLDS! (the default value of 2048 is enough for ~15 bags per player for ~1000 players)", reload = true)
+    public static int ROOM_SPACING = 2048;
 
     public static final ResourceKey<Level> BAG_DIM = ResourceKey.create(Registries.DIMENSION, ResourceLocation.fromNamespaceAndPath("dim_bag", "bag"));
 
@@ -39,32 +39,22 @@ public final class DimBag extends ModBase {
     public static BlockPos roomCenter(int id) { return new BlockPos(8 + (id - 1) * ROOM_SPACING, 128, 8); }
 
     public static int closestRoomId(BlockPos pos) {
-        int max;
-//        if (BagsData.getInstance() != null)
-//            max = BagsData.max();
-//        else
-//            max = CLIENT_SIDE_ROOM_SIZES.size();
-        max = 128;
-        return Mth.clamp((pos.getX() - 8 + ROOM_SPACING / 2) / ROOM_SPACING + 1, 0, max);
+        return Mth.clamp((pos.getX() - 8 + ROOM_SPACING / 2) / ROOM_SPACING + 1, 0, 128);
     }
 
-    public static boolean isWall(Level level, BlockPos pos) {
-        if (level.dimension().equals(BAG_DIM)) {
-            int id = closestRoomId(pos);
-            if (id <= 0)
-                return false;
-//            if (level instanceof ServerLevel)
-//                return BagsData.runOnBag(id, b -> b.getRoom().isWall(pos), false);
-//            else {
-//                if (id >= CLIENT_SIDE_ROOM_SIZES.size())
-//                    return false;
-//                Pair<BlockPos, BlockPos> p = CLIENT_SIDE_ROOM_SIZES.get(id - 1);
-//                return RoomData.isWall(pos, p.getFirst(), p.getSecond());
-//            }
-            return true;
-        }
-        return false;
+    @LevelData
+    public static final LevelDataField<Integer> test = new LevelDataField<>(0);
+
+    @RegisterCommand("test get")
+    public static int get(CommandContext<CommandSourceStack> ctx) {
+        Component component = Component.literal("val: " + test.get(Game.getLevel(Level.OVERWORLD.location())));
+        ctx.getSource().sendSuccess(()->component, true);
+        return 1;
     }
 
-    public DimBag() {}
+    @RegisterCommand("test set <val>")
+    public static int set(CommandContext<CommandSourceStack> ctx, @CmdArg("val") int val) {
+        test.set(Game.getLevel(Level.OVERWORLD.location()), val);
+        return 1;
+    }
 }
