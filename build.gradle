@@ -11,11 +11,12 @@ architectury {
 allprojects {
     group = rootProject.maven_group
     version = rootProject.mod_version
-    archives_name = rootProject.archives_name
+    mod_id = rootProject.mod_id
     readable_name = rootProject.readable_name
     description = rootProject.description
     author = rootProject.author
     license = rootProject.license
+    lim_lib_version = rootProject.lim_lib_version
 }
 
 subprojects {
@@ -25,7 +26,7 @@ subprojects {
 
     base {
         // Set up a suffixed format for the mod jar names, e.g. `example-fabric`.
-        archivesName = "$rootProject.archives_name-$project.name"
+        archivesName = "$rootProject.mod_id-$project.name"
     }
 
     repositories {
@@ -70,6 +71,14 @@ subprojects {
             // Notice: This block does NOT have the same function as the block in the top level.
             // The repositories here will be used for publishing your artifact, not for
             // retrieving dependencies.
+        }
+    }
+
+    afterEvaluate {
+        tasks.matching { it.name.startsWith("remap") }.configureEach { remapTask ->
+            if (remapTask.name == "remapJar") {
+                remapTask.dependsOn gradle.includedBuild("LimLibArch").task(":common:jar")
+            }
         }
     }
 }

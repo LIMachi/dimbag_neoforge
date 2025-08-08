@@ -7,8 +7,16 @@ pluginManagement {
     }
 }
 
-rootProject.name = archives_name
+rootProject.name = mod_id
 
 include 'common'
 include 'fabric'
 include 'neoforge'
+
+includeBuild('../LimLibArch') {
+    dependencySubstitution {
+        substitute module('com.limachi.lim_lib:lim_lib-common') using project(':common')
+        substitute module('com.limachi.lim_lib:lim_lib-fabric') using project(':fabric')
+        substitute module('com.limachi.lim_lib:lim_lib-neoforge') using project(':neoforge')
+    }
+}
