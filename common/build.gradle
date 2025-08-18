@@ -11,7 +11,8 @@ dependencies {
     // Architectury API. This is optional, and you can comment it out if you don't need it.
     modImplementation "dev.architectury:architectury:$rootProject.architectury_api_version"
 
-    modImplementation "com.limachi.lim_lib:lim_lib-common:${rootProject.lim_lib_version}-dev"
+//    implementation("com.limachi.lim_lib:lim_lib-common:${rootProject.lim_lib_version}-dev") { transitive = true }
+    modImplementation("com.limachi.lim_lib:lim_lib-common")
 }
 
 loom {

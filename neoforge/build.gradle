@@ -46,7 +46,8 @@ dependencies {
     common(project(path: ':common', configuration: 'namedElements')) { transitive false }
     shadowBundle project(path: ':common', configuration: 'transformProductionNeoForge')
 
-    modImplementation "com.limachi.lim_lib:lim_lib-neoforge:${rootProject.lim_lib_version}-dev"
+//    implementation("com.limachi.lim_lib:lim_lib-neoforge:${rootProject.lim_lib_version}-dev") { transitive = true }
+    modImplementation("com.limachi.lim_lib:lim_lib-neoforge")
 }
 
 processResources {
