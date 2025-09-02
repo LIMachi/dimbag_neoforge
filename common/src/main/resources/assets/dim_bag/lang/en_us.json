@@ -1,0 +1,15 @@
+{
+  "dim_bag.tab.title": "Dimensional Bags",
+
+  "item.lore.dim_bag.id_not_set": "§r§fid not set",
+  "item.lore.dim_bag.room_id_lore": "§r§froom id: %d",
+
+  "block.dim_bag.wall_block": "Wall Block",
+
+  "item.dim_bag.bag_item": "Dimensional Bag",
+  "item.dim_bag.ghost_bag_item": "Virtual Bag",
+  "item.dim_bag.wall_pusher_item": "Wall Pusher",
+
+  "item.dim_bag.wall_pusher_item.missing_charges.message": "Missing charges, requires: %d, but you only have %d",
+  "item.dim_bag.wall_pusher_item.max_size_reached.message": "Maximum size reached for this direction"
+}

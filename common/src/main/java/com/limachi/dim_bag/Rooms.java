@@ -2,21 +2,28 @@ package com.limachi.dim_bag;
 
 import com.limachi.lim_lib.common.annotations.Config;
 import com.limachi.lim_lib.common.annotations.RegisterData;
+import com.limachi.lim_lib.common.annotations.RegisterEventListener;
 import com.limachi.lim_lib.common.codec.CodecUtils;
 import com.limachi.lim_lib.common.codec.Codecs;
 import com.limachi.lim_lib.common.dataStorage.DataField;
+import com.limachi.lim_lib.common.modCreation.Events;
 import com.limachi.lim_lib.common.utils.Game;
 
 import com.mojang.datafixers.util.Pair;
 
+import dev.architectury.event.EventResult;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.util.Mth;
+import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.phys.AABB;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -40,12 +47,62 @@ public class Rooms {
     @RegisterData(file = "dim_bag_positions")
     public static DataField<HashMap<UUID, HashMap<Integer, Pair<BlockPos, Level>>>> ENTERED_FROM = new DataField<>(new HashMap<>(), CodecUtils.mapCodec(HashMap::new, Codecs.UUID, CodecUtils.mapCodec(HashMap::new, Codecs.INT, CodecUtils.pairCodec(Codecs.POS, Codecs.LEVEL))));
 
+    @RegisterEventListener(Events.LIVING_DEATH)
+    public static EventResult deathEvent(LivingEntity entity, DamageSource damage) {
+        if (entity != null && !(entity instanceof Player) && entity.level() instanceof ServerLevel) {
+            var enter = ENTERED_FROM.get();
+            if (enter != null)
+                if (enter.containsKey(entity.getUUID())) {
+                    enter.remove(entity.getUUID());
+                    ENTERED_FROM.setDirty();
+                }
+        }
+        return EventResult.pass();
+    }
+
     @RegisterData(file = "dim_bag_positions")
-    public static DataField<ArrayList<Pair<BlockPos, Level>>> BAGS = new DataField<>(new ArrayList<>(), CodecUtils.collectionCodec(ArrayList::new, CodecUtils.pairCodec(Codecs.POS, Codecs.LEVEL)));
+    public static DataField<HashMap<Integer, Pair<BlockPos, Level>>> BAGS = new DataField<>(new HashMap<>(), CodecUtils.mapCodec(HashMap::new, Codecs.INT, CodecUtils.pairCodec(Codecs.POS, Codecs.LEVEL)));
 
     public static BlockPos roomCenter(int id) { return new BlockPos(8 + id * ROOM_SPACING, 128, 8); }
 
     public static int closestRoomId(BlockPos pos) { return Mth.clamp((pos.getX() - 8 + ROOM_SPACING / 2) / ROOM_SPACING, 0, 128); }
+
+    public static int exactRoom(Level level, BlockPos pos) {
+        if (level.dimension().equals(DimBag.BAG_DIM)) {
+            int guess = closestRoomId(pos);
+            if (guess >= 0) {
+                var rooms = ROOM_BOUNDARIES.get();
+                if (rooms != null && guess < rooms.size()) {
+                    var boundaries = rooms.get(guess);
+                    AABB aabb = AABB.encapsulatingFullBlocks(boundaries.getFirst(), boundaries.getSecond());
+                    if (aabb.contains(pos.getCenter()))
+                        return guess;
+                }
+            }
+        }
+        return -1;
+    }
+
+    public static int isWallOfRoom(Level level, BlockPos pos) {
+        if (level.dimension().equals(DimBag.BAG_DIM)) {
+            int guess = closestRoomId(pos);
+            if (guess >= 0) {
+                var rooms = ROOM_BOUNDARIES.get();
+                if (rooms != null && guess < rooms.size()) {
+                    var boundaries = rooms.get(guess);
+                    boolean onX = pos.getX() == boundaries.getFirst().getX() || pos.getX() == boundaries.getSecond().getX();
+                    boolean onY = pos.getY() == boundaries.getFirst().getY() || pos.getY() == boundaries.getSecond().getY();
+                    boolean onZ = pos.getZ() == boundaries.getFirst().getZ() || pos.getZ() == boundaries.getSecond().getZ();
+                    boolean inX = pos.getX() >= boundaries.getFirst().getX() && pos.getX() <= boundaries.getSecond().getX();
+                    boolean inY = pos.getY() >= boundaries.getFirst().getY() && pos.getY() <= boundaries.getSecond().getY();
+                    boolean inZ = pos.getZ() >= boundaries.getFirst().getZ() && pos.getZ() <= boundaries.getSecond().getZ();
+                    if ((onX && inY && inZ) || (inX && onY && inZ) || (inX && inY && onZ))
+                        return guess;
+                }
+            }
+        }
+        return -1;
+    }
 
     public static int buildRoom() { return buildRoom(STARTING_ROOM_RADIUS); }
 
@@ -115,11 +172,14 @@ public class Rooms {
 
     public static boolean enter(int id, Entity entity, boolean store) {
         if (id >= 0 && Game.getLevel(DimBag.BAG_DIM.location()) instanceof ServerLevel sl) {
-            if (store && sl.equals(entity.level()) && closestRoomId(entity.blockPosition()) == id) //trying to enter the bag from inside, do not store the position (potential loop when trying to leave)
-                store = false;
-            if (store) {
-                var enter = ENTERED_FROM.get();
-                if (enter != null) {
+            var enter = ENTERED_FROM.get();
+            if (enter != null) {
+                if (store && sl.equals(entity.level())) {
+                    int near = closestRoomId(entity.blockPosition());
+                    if (near == id || (enter.containsKey(entity.getUUID()) && enter.get(entity.getUUID()).containsKey(id)))
+                        store = false; //2 special cases: recursive enter and overwrite of destination
+                }
+                if (store) {
                     if (!enter.containsKey(entity.getUUID()))
                         enter.put(entity.getUUID(), new HashMap<>());
                     var re = enter.get(entity.getUUID());

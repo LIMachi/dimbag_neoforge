@@ -18,6 +18,13 @@ public class Commands {
         return 1;
     }
 
+    @RegisterCommand(value = "dim_bag tests new_room", OPLevel = 2)
+    public static int newRoom(CommandContext<CommandSourceStack> ctx) {
+        int id = Rooms.buildRoom();
+        ctx.getSource().sendSuccess(()-> Component.literal("Successfully create room " + id), true);
+        return 1;
+    }
+
     @RegisterCommand(value = "dim_bag tests push_wall", OPLevel = 2)
     public static int pushWall(CommandContext<CommandSourceStack> ctx) {
         if (ctx.getSource().getEntity() instanceof ServerPlayer player) {
@@ -59,6 +66,13 @@ public class Commands {
     public static int leaveRoom(CommandContext<CommandSourceStack> ctx) {
         if (ctx.getSource().getEntity() != null && ctx.getSource().getLevel().dimension().location().equals(DimBag.BAG_DIM.location()))
             Rooms.leave(Rooms.closestRoomId(ctx.getSource().getEntity().blockPosition()), ctx.getSource().getEntity());
+        return 1;
+    }
+
+    @RegisterCommand(value = "dim_bag tests spawn <id>")
+    public static int spawnBagEntity(CommandContext<CommandSourceStack> ctx, @CmdArg("id") Integer id) {
+        var pos = ctx.getSource().getPosition();
+        BagEntity.create(ctx.getSource().getLevel(), pos.x, pos.y, pos.z, id);
         return 1;
     }
 }
